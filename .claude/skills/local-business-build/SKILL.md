@@ -223,14 +223,27 @@ if [ -z "$UNSPLASH_ACCESS_KEY" ] && [ -f .env ]; then
     export UNSPLASH_ACCESS_KEY="$(grep -E '^UNSPLASH_ACCESS_KEY=' .env | head -1 | cut -d= -f2- | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//')"
 fi
 
-# 2. Final check. If still empty, skip to Manual Fallback below.
+# 2. Branch: if still empty AFTER the .env attempt, take the Manual
+#    Fallback path. Otherwise, proceed with the Unsplash API workflow.
+#    The else clause is what gates the success message; without it,
+#    the success line would print on every path including the empty
+#    one, which would mislead any later step into running the API call.
 if [ -z "$UNSPLASH_ACCESS_KEY" ]; then
     echo "[*] UNSPLASH_ACCESS_KEY not set in shell or .env; using manual fallback"
-    # ... jump to Manual Fallback section below ...
+    # Control transfer: do NOT continue to Step B / C / D below.
+    # Skip directly to the Manual Fallback subsection further down.
+else
+    echo "[*] UNSPLASH_ACCESS_KEY loaded; proceeding with Unsplash API fetch"
 fi
-
-echo "[*] UNSPLASH_ACCESS_KEY loaded; proceeding with Unsplash API fetch"
 ```
+
+**How Claude must interpret the empty-key branch**: when the
+`[ -z "$UNSPLASH_ACCESS_KEY" ]` branch fires, treat the Unsplash
+workflow as TERMINATED. Do NOT execute Step B (build query), Step C
+(fetch from Unsplash), or Step D (inject into HTML). Jump directly to
+the Manual Fallback subsection and emit the placeholder URL + the
+fallback report to the user. The success message inside the `else`
+branch is the only signal that Steps B-D should run.
 
 **Key naming**: the variable MUST be named exactly `UNSPLASH_ACCESS_KEY`
 in `.env`. Generic names like `ACCESS_KEY` are unsafe (collide with
@@ -243,8 +256,6 @@ Only the Unsplash **Access Key** is needed (the public key used in the
 `Client-ID` header). `APPLICATION_ID` and `SECRET_KEY` from the Unsplash
 dashboard are NOT used by this skill -- they're only relevant for OAuth
 flows which are out of scope.
-
-Do NOT proceed with the API call if the preflight is empty.
 
 ---
 
