@@ -32,7 +32,7 @@ visual portfolio diversity. That ranks the work as follows:
 
 | Add | SEO weight | Effort |
 |---|---|---|
-| `LocalBusiness` JSON-LD schema with prospect data | Highest | ~30 min |
+| JSON-LD schema with prospect data (`@type: "Plumber"` -- a LocalBusiness subtype) | Highest | ~30 min |
 | Unique `<meta name="description">` per build | High | ~15 min |
 | 2-3 hero copy variants per tier in `07` | Medium-high | ~30 min |
 | 2-3 variants for each canonical service description | Medium-high | ~30 min |
@@ -135,9 +135,16 @@ headings -- additive variation across many small dimensions.
 ```
 
 Only render fields the prospect actually provides. Skip any block that
-would require null/placeholder values. Hours formatting per schema.org's
-`OpeningHoursSpecification` spec (or the simpler `openingHours` string
-format if hours data is loose).
+would require null/placeholder values.
+
+**Hours formatting**: by default use the simpler `openingHours` string
+format (e.g. `"Mo-Fr 07:00-18:00 Sa 08:00-14:00"`) as shown in the
+template above. The template uses this approach because most prospect
+hours data is loose / human-readable. If a prospect provides
+structured day-by-day hours in the JSON, optionally upgrade to the
+fuller `openingHoursSpecification` array with one
+`OpeningHoursSpecification` entry per day-range. Both forms are valid
+schema.org; pick based on the precision of the source data.
 
 ## What's intentionally NOT in scope
 
