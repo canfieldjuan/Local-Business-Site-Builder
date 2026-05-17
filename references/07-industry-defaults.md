@@ -54,14 +54,16 @@ absent, fall through to the next tier.
 **Tier 1 -- Established (years_in_business >= 8):**
 
 This tier wins even when has_24_7 is true. An 8+ year track record
-beats "we're available 24/7" on credibility, and 24/7 still gets named
-in the subhead. Trying to out-emergency Roto-Rooter in the headline is
-a losing position for a local plumber; trying to out-trust them on
+beats "we're available 24/7" on credibility. When has_24_7 is true,
+the 24/7 claim is carried by the `.hero-chip` eyebrow badge above the
+headline (see 06-build-prompt.md HERO CHIP rule) -- do NOT duplicate
+it in the subhead. Trying to out-emergency Roto-Rooter in the headline
+is a losing position for a local plumber; trying to out-trust them on
 locality and tenure is winnable.
 
 - Headline: `[CITY]'s Trusted Plumber Since [YEAR]`
-- Subhead (24/7 yes): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. 24/7 emergency service available. Licensed, insured, family-owned.`
-- Subhead (24/7 no): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. Licensed, insured, family-owned. Free estimates.`
+- Subhead (any value of has_24_7): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. Licensed, insured, family-owned.`
+  (If has_24_7 is false, append: ` Free estimates.`)
 
 **Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
 
@@ -126,8 +128,20 @@ See 06-build-prompt.md SECTION ARCHITECTURE for exact markup patterns.
    Subhead names the service-area cities -- those cities are NOT repeated
    anywhere else on the page.
 4. Coverage band (slim strip: "Not sure if we cover your area? Call <phone>")
-5. Services grid (3 columns desktop, 1 column mobile, 6-8 services)
-6. Why choose us / differentiators (3-4 cards: response time, pricing, local, warranty)
+5. Services grid (3 columns desktop, 1 column mobile, EXACTLY 6 services).
+   6 fills the grid as 2 clean rows of 3 -- 7 or 8 leaves an orphan
+   trailing cell that reads as a layout bug. Prospect-specified
+   services win; if the prospect supplied more than 6, pick the 6
+   with highest commercial value (emergency + replacement work over
+   small-ticket fixture jobs). The default 6 for a plumber when the
+   prospect list is sparse: Emergency Leak Repair, Water Heater
+   Repair & Install, Drain Cleaning, Sewer Line Repair, Sump Pump
+   Service, Toilet Repair & Install. (Faucet & Fixture Replacement
+   and Garbage Disposal stay in the canonical catalog above for
+   prospects who explicitly ask for them.)
+6. Why choose us / differentiators (EXACTLY 3 cards, wrapped in
+   <section class="section-band">. Consolidate overlapping claims --
+   "family-owned" + "licensed/insured/local" become ONE card, not two.)
 7. Customer Reviews -- three branches (see 06-build-prompt.md for full
    markup):
    - 3+ entries in prospect.reviews -> card grid with quote cards plus

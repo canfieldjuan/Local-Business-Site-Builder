@@ -55,6 +55,15 @@ Content source rules:
   service-area framing, and section content can all draw from
   INDUSTRY_DEFAULTS when the prospect didn't supply them.
 
+Brand display rule:
+- Render `business_name` in TITLE CASE for all on-page display
+  ("Drees Plumbing", not "DREES PLUMBING INC"). Strip legal suffixes
+  ("Inc.", "LLC", "Co.") from the nav, hero, footer brand line, and
+  any prominent headings. Preserve the full legal name ONLY in the
+  footer copyright line (e.g. "© 2026 Drees Plumbing Inc."). If the
+  prospect supplied `display_name` explicitly, use it verbatim and
+  ignore this rule.
+
 Output rules:
 - Output ONLY raw HTML. No markdown code fences (no ```html, no ```),
   no preamble like "Here is the website", no trailing commentary. The
@@ -119,14 +128,40 @@ PROSPECT_JSON. For plumbers, that is:
    ```
    Where `phone_digits` is the prospect phone with all non-digit chars
    stripped (for the `tel:` link).
-5. Services grid (`.services-grid` / `.service-card`) -- 6-8 services
-   from prospect.services (top priority), augmented from the
-   INDUSTRY_DEFAULTS canonical service catalog if the prospect list is
-   sparse. Each card: service name, one-line description.
-6. Why choose us (`.benefits-grid` / `.benefit-card`) -- 3-4 differentiators
-   from INDUSTRY_DEFAULTS competitive-positioning bullets that the
-   prospect can credibly claim. Skip any that are clearly false for the
-   prospect (e.g. "Family owned" only if prospect.family_owned is true).
+5. Services grid (`.services-grid` / `.service-card`) -- EXACTLY 6
+   services (matches INDUSTRY_DEFAULTS rule: 6 fills the grid as 2
+   clean rows of 3; 7 or 8 leaves an orphan trailing cell). Prospect-
+   specified services win; if prospect supplied more than 6, pick the
+   6 with highest commercial value per INDUSTRY_DEFAULTS guidance. If
+   fewer than 6, augment from the canonical service catalog. Each
+   card: service name, one-line description.
+6. Why choose us -- EXACTLY 3 differentiators (the `.benefits-grid` is
+   a 3-column desktop grid; 4 cards leaves an orphan trailing cell).
+   Wrap the whole section in `<section class="section-band">` instead
+   of the standard `<div class="page-wrap section-gap">` so it lands
+   on the lighter alternating background and breaks up the vertical
+   rhythm of the page.
+
+   Markup:
+   ```html
+   <section class="section-band">
+     <div class="page-wrap">
+       <div class="sec-hd">
+         <span class="sec-title"><span class="sec-dot"></span>Why Choose Us</span>
+       </div>
+       <div class="benefits-grid benefits-grid--three">
+         <!-- exactly 3 .benefit-card entries -->
+       </div>
+     </div>
+   </section>
+   ```
+
+   Pick the 3 from INDUSTRY_DEFAULTS competitive-positioning bullets
+   that the prospect can credibly claim. Skip any that are clearly
+   false (e.g. "Family owned" only if prospect.family_owned is true).
+   When "Family owned" and "Licensed/insured/local" both apply,
+   CONSOLIDATE them into a single card -- they overlap and reading
+   two adjacent cards saying nearly the same thing weakens both.
 7. Customer Reviews -- branching logic based on what prospect data
    contains. Three possible renderings:
 
@@ -277,6 +312,19 @@ If prospect.has_24_7 is explicitly false, drop the "24/7" badge and
 use "Same-Day Service" or just the phone number. Never claim 24/7
 availability the prospect didn't promise.
 
+HERO CHIP (eyebrow badge above the headline):
+- When prospect.has_24_7 is true, render a `.hero-chip` with a
+  pulsing `.hero-chip-dot` immediately above the headline, label
+  "24/7 Emergency Service Available". Markup:
+  ```html
+  <div class="hero-chip"><span class="hero-chip-dot"></span>24/7 Emergency Service Available</div>
+  ```
+- When the chip is rendered, REMOVE the matching "24/7 emergency
+  service available" clause from the subhead. The chip carries the
+  claim; the subhead should not duplicate it. Other subhead clauses
+  (years-in-business, service-area, licensed-insured) remain.
+- Skip the chip entirely when has_24_7 is false or absent.
+
 ---
 
 ## THEME & TYPOGRAPHY
@@ -300,7 +348,9 @@ Left column (brand) markup:
 
 ```html
 <div>
-  <div class="ft-brand-name">[PROSPECT.business_name]</div>
+  <div class="ft-brand-name">[PROSPECT.business_name -- apply the
+    Brand display rule from the SYSTEM PROMPT: title-case, strip
+    legal suffixes ("Inc.", "LLC", "Co.")]</div>
   <div class="ft-tagline">[Short tagline, e.g. "[CITY]'s Trusted [TRADE]"]</div>
   <span class="ft-phone-label">[label, e.g. "Call us 24/7" if has_24_7 else "Call us"]</span>
   <a href="tel:[phone_digits]" class="ft-phone">[PROSPECT.phone]</a>
@@ -330,6 +380,34 @@ Middle and right columns use `.ft-col-title` headers and `.ft-links`
 lists. Typical content: middle column = Hours OR Services list, right
 column = Service Area list OR Social links. Tailor to what the prospect
 data supports.
+
+When the right column is "Service Area", render a small `.ft-coverage-map`
+SVG above the `.ft-links` list. The SVG visualises the coverage radius
+as concentric dashed/solid circles with a center pin in --accent. The
+inside label text reads "[N]-MILE RADIUS" where N is the numeric mile
+count extracted from `prospect.service_radius` (a free-form string).
+Look for patterns like "within 25 miles", "25-mile radius", or
+"25mi"; pull the integer. If `prospect.service_radius` is absent or
+no number is found, render "SERVICE AREA" instead of "[N]-MILE
+RADIUS" so the label stays honest. (Do NOT default to a fabricated
+mile count like 20 -- that misrepresents coverage.) Markup:
+
+```html
+<div>
+  <div class="ft-col-title">Service Area</div>
+  <svg class="ft-coverage-map" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ft-coverage-title">
+    <title id="ft-coverage-title">[N]-mile service area centered on [PROSPECT.city], [PROSPECT.state]</title>
+    <circle cx="80" cy="55" r="40" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity="0.35"/>
+    <circle cx="80" cy="55" r="26" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+    <circle cx="80" cy="55" r="4" fill="var(--accent)"/>
+    <circle cx="80" cy="55" r="9" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>
+    <text x="80" y="10" text-anchor="middle" font-family="inherit" font-size="8" font-weight="700" fill="currentColor" opacity="0.7" letter-spacing="0.8">[N]-MILE RADIUS</text>
+  </svg>
+  <ul class="ft-links">
+    <!-- 3-4 list items max; consolidate "City1 &middot; City2" pairs to keep the list short -->
+  </ul>
+</div>
+```
 
 ---
 
@@ -423,3 +501,7 @@ Before outputting, verify:
       "Lorem ipsum", no generic stock testimonials, no fake awards.
 - [ ] Submit button label is first-person and specific
 - [ ] Mobile collapses at 768px (handled automatically by base template)
+- [ ] Brand displayed title-cased (no ALL-CAPS); legal "Inc./LLC" only in footer copyright
+- [ ] Hero chip rendered above headline iff has_24_7=true; matching clause removed from subhead
+- [ ] Why Choose Us has EXACTLY 3 cards and is wrapped in section-band
+- [ ] Footer Service Area column renders .ft-coverage-map SVG above the city list

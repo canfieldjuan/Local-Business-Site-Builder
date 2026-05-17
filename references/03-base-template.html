@@ -37,7 +37,7 @@
   --secondary:     #REPLACE;   /* brand secondary -- category badges, highlights */
 
   /* --- Review-star color (theme-independent gold) --- */
-  --star-color:    #FBBC04;
+  --star-color:    #E5A317;
 
   /* --- Fallback scales (will be overridden by .theme-light or .theme-dark) --- */
   --bg:            #ffffff;
@@ -111,7 +111,7 @@ img { display: block; max-width: 100%; }
    UTILITIES
    ================================================================ */
 .page-wrap    { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--page-pad); }
-.section-gap  { margin-top: 3rem; }
+.section-gap  { margin-top: 3.75rem; }
 
 /* ================================================================
    TICKER
@@ -496,7 +496,7 @@ img { display: block; max-width: 100%; }
    directly on the element. Text must be light (#fff) when this class is active. */
 .hero-fullbleed {
   background-size: cover !important;
-  background-position: center !important;
+  background-position: left center !important;
   background-repeat: no-repeat !important;
   position: relative;
   min-height: 60vh;
@@ -509,7 +509,7 @@ img { display: block; max-width: 100%; }
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%);
+  background: linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.20) 75%, rgba(0,0,0,0.05) 100%);
   z-index: 0;
 }
 .hero-fullbleed .dual-cta-hero-inner {
@@ -1148,6 +1148,15 @@ img { display: block; max-width: 100%; }
   .trust-strip-inner { gap: 1rem; overflow-x: auto; }
   .trust-item + .trust-item { padding-left: 1rem; }
   .dual-cta-hero { padding: 2.5rem 0 2rem; }
+  /* Mobile hero overlay override: the desktop left-to-right gradient
+     fades to 5% on the right, which is fine when the text column has
+     a constrained max-width and sits on the dark left side. On mobile
+     the headline spans the full viewport and can land over the bright
+     photo edge, so fall back to a top-to-bottom overlay that keeps
+     white text legible across the entire width. */
+  .hero-fullbleed::before {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.40) 100%);
+  }
   .dual-cta-row  { flex-direction: column; align-items: flex-start; }
   .cta-emergency, .cta-planned { width: 100%; justify-content: center; }
   .cta-or        { display: none; }
@@ -1571,12 +1580,22 @@ img { display: block; max-width: 100%; }
 .process-title { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
 .process-desc { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
 
-/* Benefits grid */
+/* Benefits grid -- 3-col desktop / 1-col mobile.
+   Use exactly 3 cards; the build prompt enforces the count so the
+   grid never has an orphan trailing cell. */
 .benefits-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2px;
   background: var(--border);
+}
+/* Modifier for the from-scratch build's Why-Choose-Us section, which
+   uses EXACTLY 3 cards (see 06-build-prompt.md). Single-service interior
+   pages keep the default 2-col grid so a 4-card benefits section doesn't
+   orphan to a 3+1 layout. Use `class="benefits-grid benefits-grid--three"`
+   in the build prompt's Why-Choose-Us markup. */
+.benefits-grid--three {
+  grid-template-columns: repeat(3, 1fr);
 }
 .benefit-card {
   background: var(--bg-card);
@@ -1662,6 +1681,79 @@ img { display: block; max-width: 100%; }
 }
 
 
+
+
+/* ================================================================
+   SECTION BAND -- alternating-background full-bleed wrapper.
+   Use to break up vertical rhythm: wrap one or two sections (typically
+   "Why Choose Us") in <section class="section-band">...</section> to
+   shift them onto the lighter --bg-card surface. The benefit cards
+   override to --bg so they read as elevated on the band.
+   ================================================================ */
+.section-band {
+  background: var(--bg-card);
+  border-top: var(--border-width) solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
+  padding: 4.5rem 0;
+  margin-top: 4rem;
+}
+.section-band .benefits-grid { background: var(--border-mid); }
+.section-band .benefit-card  { background: var(--bg); }
+
+/* ================================================================
+   HERO CHIP -- pulsing eyebrow badge above the hero headline.
+   Use for a single key availability claim ("24/7 Emergency Service
+   Available", "Open Now", etc) when the prospect has has_24_7=true.
+   When this chip is rendered, the same fact must be REMOVED from the
+   subhead -- the chip carries it, the subhead should not duplicate.
+   ================================================================ */
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 13px 6px 11px;
+  border-radius: 999px;
+  margin-bottom: 1.5rem;
+}
+.hero-chip-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #4ADE80;
+  box-shadow: 0 0 0 4px rgba(74,222,128,0.25);
+  animation: hero-chip-pulse 2s ease-in-out infinite;
+}
+@keyframes hero-chip-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(74,222,128,0.25); }
+  50%      { box-shadow: 0 0 0 8px rgba(74,222,128,0.00); }
+}
+
+/* ================================================================
+   FOOTER COVERAGE MAP -- small dashed-radius SVG that visualises the
+   service area in the footer's right column. Render above the city
+   list. The label text inside the SVG should be the actual radius
+   (e.g. "25-MILE RADIUS") -- the build prompt extracts the integer
+   from prospect.service_radius (a free-form string like "Effingham
+   and surrounding communities within 25 miles"). When no integer is
+   present in the string, fall back to "SERVICE AREA" rather than
+   fabricating a default.
+   ================================================================ */
+.ft-coverage-map {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  margin-bottom: 0.9rem;
+  color: var(--text-mid);
+  display: block;
+}
 
 /* ================================================================
    MODERN REVEAL ANIMATIONS
