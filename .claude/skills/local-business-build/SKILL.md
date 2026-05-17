@@ -217,10 +217,25 @@ ourselves before the preflight check.
 
 ```bash
 # 1. If the var isn't in the shell environment yet, try to read it
-#    from .env. Strip surrounding quotes; preserve embedded '=' in
-#    the value by splitting only on the first '='.
+#    from .env. The extraction mirrors python-dotenv's tolerance for
+#    common .env variants:
+#      - whitespace around the '=' is allowed (KEY = value)
+#      - trailing inline comments preceded by whitespace are stripped
+#        ('KEY=value # comment' -> 'value')
+#      - trailing CR (Windows line endings) is stripped
+#      - leading/trailing whitespace around the value is stripped
+#      - one layer of surrounding quotes ("..." or '...') is stripped
+#      - embedded '=' in the value is preserved (split only on first '=')
 if [ -z "$UNSPLASH_ACCESS_KEY" ] && [ -f .env ]; then
-    export UNSPLASH_ACCESS_KEY="$(grep -E '^UNSPLASH_ACCESS_KEY=' .env | head -1 | cut -d= -f2- | sed -e 's/^["'"'"']//' -e 's/["'"'"']$//')"
+    export UNSPLASH_ACCESS_KEY="$( \
+        grep -E '^[[:space:]]*UNSPLASH_ACCESS_KEY[[:space:]]*=' .env \
+        | head -1 \
+        | cut -d= -f2- \
+        | sed -E 's/[[:space:]]+#.*$//' \
+        | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' \
+        | sed -E 's/\r$//' \
+        | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/' \
+    )"
 fi
 
 # 2. Branch: if still empty AFTER the .env attempt, take the Manual
@@ -239,11 +254,19 @@ fi
 
 **How Claude must interpret the empty-key branch**: when the
 `[ -z "$UNSPLASH_ACCESS_KEY" ]` branch fires, treat the Unsplash
-workflow as TERMINATED. Do NOT execute Step B (build query), Step C
-(fetch from Unsplash), or Step D (inject into HTML). Jump directly to
-the Manual Fallback subsection and emit the placeholder URL + the
-fallback report to the user. The success message inside the `else`
-branch is the only signal that Steps B-D should run.
+API workflow as TERMINATED. Step B (build the search query from
+`07-industry-defaults.md`) STILL RUNS in this branch -- the Manual
+Fallback report below needs the query string to display the
+"Query attempted: ..." line and the suggested manual Unsplash
+search URLs. Step B is pure data prep, not an API call, so it's
+always safe to run. But Steps C (fetch from Unsplash) and D
+(inject the API-returned URL into HTML) MUST NOT execute -- the
+preflight just told you there's no way to authenticate. Jump
+straight from Step B to the Manual Fallback subsection and emit
+the placeholder URL + the fallback report.
+
+The success message inside the `else` branch is the only signal
+that Steps C-D should run with API calls.
 
 **Key naming**: the variable MUST be named exactly `UNSPLASH_ACCESS_KEY`
 in `.env`. Generic names like `ACCESS_KEY` are unsafe (collide with
