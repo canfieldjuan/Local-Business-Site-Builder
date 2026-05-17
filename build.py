@@ -3,7 +3,7 @@ existing online presence. Sibling pipeline to pipeline.py (which redesigns
 existing sites).
 
 Usage:
-  python build.py <prospect.json> [--skip-deploy] [--skip-image-gen] [--skip-email] [--skip-email-draft]
+  python build.py <prospect.json> [--skip-deploy] [--skip-image-gen] [--skip-email-draft]
 
 Reads a small prospect JSON, optionally generates a hero image, generates
 a single-page site via Sonnet, writes to outputs/builds/<slug>/, and
@@ -18,7 +18,11 @@ from datetime import date
 from lib.clients import openai_client as client, GENERATION_MODEL
 from lib.images import generate_image_openrouter
 from lib.deploy import deploy_to_vercel
-from lib.email import send_pitch_email
+# lib.email.send_pitch_email is intentionally NOT imported here. The
+# from-scratch build flow uses the manual email_draft.md workflow
+# instead -- the salesperson sends from their own client after
+# replacing [VERCEL_URL_PLACEHOLDER]. The Resend-backed auto-send
+# path is still used by pipeline.py (the redesign flow).
 
 BUILD_PROMPT_PATH = "references/06-build-prompt.md"
 INDUSTRY_DEFAULTS_PATH = "references/07-industry-defaults.md"
@@ -259,18 +263,36 @@ def main(prospect_json_path):
     # Email draft -- written alongside the HTML so the salesperson sees
     # the pitch copy right when they review the site. Skippable; the
     # VERCEL_URL_PLACEHOLDER token gets manually replaced post-deploy.
+    # Stale-draft protection: any prior email_draft.md in the reused
+    # output_dir is removed whenever the draft is skipped or generation
+    # fails. Otherwise a salesperson reviewing the new site could pick
+    # up an outdated pitch from a previous build.
+    email_path = os.path.join(output_dir, "email_draft.md")
     if "--skip-email-draft" in sys.argv:
         print("[*] Skipping pitch email draft due to --skip-email-draft flag.")
+        if os.path.isfile(email_path):
+            os.remove(email_path)
+            print(f"[*] Removed stale draft from prior build: {email_path}")
     else:
         try:
             email_md = generate_email_draft(prospect)
-            email_path = os.path.join(output_dir, "email_draft.md")
+            if "[VERCEL_URL_PLACEHOLDER]" not in email_md:
+                # The token is the handoff point for the post-deploy URL.
+                # A single model miss makes the draft unusable. Treat as
+                # a generation failure rather than writing a broken draft.
+                raise ValueError(
+                    "Generated draft is missing the [VERCEL_URL_PLACEHOLDER] token; "
+                    "salesperson would have no place to insert the deployed URL."
+                )
             with open(email_path, "w") as f:
                 f.write(email_md)
             print(f"[+] Pitch email draft: {email_path}")
             print(f"[*] Replace [VERCEL_URL_PLACEHOLDER] with the deployed URL before sending.")
         except Exception as e:
             print(f"[!] Email draft generation failed: {e}")
+            if os.path.isfile(email_path):
+                os.remove(email_path)
+                print(f"[*] Removed stale draft from prior build: {email_path}")
             print(f"[*] Site build still complete; rerun with --skip-email-draft if this keeps failing.")
 
     if "--skip-deploy" in sys.argv:
@@ -286,31 +308,16 @@ def main(prospect_json_path):
     if not vercel_url:
         return
 
-    owner_email = prospect.get("owner_email")
-    if "--skip-email" in sys.argv:
-        print(f"\n[*] Skipping pitch email due to --skip-email flag.")
-        print(f"[*] Live URL: {vercel_url}")
-        return
-    if not owner_email:
-        print(f"\n[!] No owner_email in prospect JSON. Skipping email.")
-        print(f"[*] Live URL: {vercel_url}")
-        return
-
-    email_choice = input(f"\n[?] Send pitch email to {owner_email}? (y/N): ")
-    if email_choice.lower() == "y":
-        send_pitch_email(
-            owner_email,
-            prospect["business_name"],
-            vercel_url,
-            subject_prefix="A free website draft for"
-        )
-    else:
-        print(f"[*] Email cancelled.")
-        print(f"[*] Live URL: {vercel_url}")
+    print(f"\n[+] Live URL: {vercel_url}")
+    email_draft_hint_path = os.path.join(output_dir, "email_draft.md")
+    if os.path.isfile(email_draft_hint_path):
+        print(f"[*] Pitch email draft ready: {email_draft_hint_path}")
+        print(f"[*] Replace [VERCEL_URL_PLACEHOLDER] with {vercel_url}")
+        print(f"[*] Send from your own email client. Do NOT use any automated sender.")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1].startswith("--"):
-        print("Usage: python build.py <prospect.json> [--skip-deploy] [--skip-image-gen] [--skip-email] [--skip-email-draft]")
+        print("Usage: python build.py <prospect.json> [--skip-deploy] [--skip-image-gen] [--skip-email-draft]")
     else:
         main(sys.argv[1])

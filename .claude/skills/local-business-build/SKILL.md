@@ -10,7 +10,7 @@ prospect using the curated build pipeline in this repo. It replaces the
 OpenRouter-based `build.py` for individual builds — Claude generates the HTML
 directly, no external API calls, no per-build dollar cost.
 
-The reference files (03, 06, 07) are the single source of truth and are
+The reference files (03, 06, 07, 08) are the single source of truth and are
 shared with the `build.py` Python pipeline and the Claude Design project.
 Edit those files to change behavior; this SKILL.md only describes the
 workflow, not the rules themselves.

@@ -63,8 +63,8 @@ Not a sales rep. Not a consultant. Not a brand. A person.
 **Length**: 4-6 short sentences total, including signature. Under
 100 words. Anything longer gets skimmed and dismissed.
 
-**Subject line**: 6-10 words max. The business name + a hook. Not
-clickbait. Examples:
+**Subject line**: 6-9 words (must be UNDER 10). The business name +
+a hook. Not clickbait. Examples:
 - "Built a website for Drees Plumbing"
 - "A free draft for [Business Name]"
 - "Quick look -- new site for [Business Name]"
@@ -83,7 +83,7 @@ strongest available, do NOT stack more than two of them.
 |---|---|---|
 | Longevity | `years_in_business >= 10` | "You've been at this for [N] years without a website. The work speaks for itself." |
 | Review score | `google_review_score >= 4.0` AND `google_review_count >= 5` | "Your [SCORE]/5 from [COUNT] Google reviews tells me people who find you are happy. I'd like more of them finding you." |
-| Trade competition | Always available -- mention national chain saturation in their city | "Right now when someone in [CITY] searches '[TRADE] near me,' the first 7 results are [NATIONAL CHAIN] and the franchise crowd. You're not on that page. This puts you on it." |
+| Trade competition | Always available, but phrase as observation NOT specific SERP claim or outcome promise | "When customers in [CITY] search '[TRADE] near me,' the national chains crowd the top of the page. Without a site, you're hard to find." (Do NOT claim a specific number of results, a specific competitor's rank, or that this site will rank above any competitor. State the visibility problem; do not promise a ranking outcome.) |
 | 24/7 availability | `has_24_7: true` | "I noticed you're 24/7. People searching at 11pm need to find you fast -- the phone in the hero is one tap on mobile." |
 | Family-owned | `family_owned: true` | "Made the family-owned thing obvious throughout -- not buried in fine print." |
 
@@ -156,9 +156,8 @@ Built a website for Drees Plumbing on spec. It's live:
 
 No charge to look. If the design works for you, I host it for you
 for $15/year (just the domain -- no monthly fee, no platform
-lock-in). Right now when someone in Effingham searches "plumber
-near me," the first 7 results are Roto-Rooter and the franchise
-crowd. You're not on that page. This puts you on it.
+lock-in). When folks in Effingham search "plumber near me," the
+national chains crowd the page. Without a site, you're hard to find.
 
 Take a look or don't. Either way no follow-up unless you say
 "yeah, let's talk."
@@ -166,8 +165,9 @@ Take a look or don't. Either way no follow-up unless you say
 -- Juan
 ```
 
-That's the target. ~80 words, 5 short sentences, one concrete
-competitive fact, explicit exit clause.
+That's the target. ~75 words, 5 short sentences, one observation
+about visibility (NOT a specific SERP claim, NOT a ranking promise),
+explicit exit clause.
 
 ### Drafted output when data is sparse
 
@@ -218,8 +218,10 @@ Recipient hint: [PROSPECT.owner_email if set, otherwise "TODO: prospect's owner 
 
 - [ ] Replace `[VERCEL_URL_PLACEHOLDER]` with the actual deployed Vercel URL
 - [ ] Confirm owner first name spelling (if used)
-- [ ] Send from your own email client (gmail, outlook, etc.) -- NOT from
-      Resend or any automated system. This is a personal pitch.
+- [ ] Send from your own email client (Gmail, Outlook, etc.). The
+      from-scratch build pipeline does NOT auto-send pitch emails;
+      this draft is the only outreach asset and must go through your
+      personal mailbox so it lands as a peer-to-peer message.
 - [ ] Do not follow up unless they reply.
 ```
 
@@ -239,6 +241,9 @@ final URL.
 - No exclamation marks except in the recipient's own quoted review
   text (which you should NOT include anyway -- see fabrication guards).
 - No URLs other than the `[VERCEL_URL_PLACEHOLDER]` token.
-- No personal sign-off other than "Juan" (the salesperson's first
-  name -- defaults to "Juan", configurable via prospect.salesperson_first_name).
+- Sign-off line is `-- [SALESPERSON_FIRST_NAME]` where the name is
+  passed to you in the user prompt as `SALESPERSON FIRST NAME: <name>`.
+  Use that value verbatim. Do NOT hardcode any other name. The build
+  pipeline defaults to "Juan" when `prospect.salesperson_first_name`
+  is null, but the prompt should respect whatever value is passed.
 - Body length under 100 words. Subject line under 10 words.
