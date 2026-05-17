@@ -178,6 +178,34 @@ source.
 
 ---
 
+## Generate the pitch email draft (alongside the HTML)
+
+After writing `index.html`, also write `outputs/builds/<slug>/email_draft.md`
+containing the Day-1 pitch email the salesperson will manually send.
+
+Read `references/08-pitch-email-prompt.md` for the voice rules, hooks,
+and template. The email is peer-to-peer, plain-spoken, ~80 words, with
+hooks driven by prospect data (longevity, review score, trade
+competition, etc.).
+
+The body must contain a literal `[VERCEL_URL_PLACEHOLDER]` token where
+the live URL will go — the salesperson swaps it in after deployment.
+
+Use `prospect.salesperson_first_name` for the sign-off; fall back to
+`"Juan"` if absent.
+
+Hard rules from `08`:
+- 4-6 short sentences, under 100 words
+- No agency-speak ("elevate your brand", "value proposition", "love to chat")
+- Subject line under 10 words, no "Re:" prefix, no emojis
+- Explicit "no follow-up unless you say so" exit clause
+- Never fabricate metrics, review quotes, or outcome promises
+
+If the user invokes the skill with the equivalent of `--skip-email-draft`,
+skip this step.
+
+---
+
 ## Report results
 
 After writing the file, print a short summary to the user:
@@ -229,6 +257,7 @@ automatically — confirm with the user first because:
 | `references/03-base-template.html` | CSS framework + component library |
 | `references/06-build-prompt.md` | Section rules + generation contract |
 | `references/07-industry-defaults.md` | Trade-specific knowledge |
+| `references/08-pitch-email-prompt.md` | Day-1 pitch email voice + template (used to produce `email_draft.md` alongside the site) |
 | `examples/prospect-plumber-template.json` | Schema / optional-field reference |
 
 These same files are consumed by `build.py` (programmatic) and the

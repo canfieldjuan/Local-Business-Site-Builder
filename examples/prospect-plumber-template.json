@@ -68,5 +68,8 @@
   "formspree_endpoint": "https://formspree.io/f/xnjraeqp",
   "thank_you_url": null,
 
+  "_salesperson_comment": "Used by the email_draft.md generator (references/08-pitch-email-prompt.md) as the sign-off name. Defaults to 'Juan' if null. Set this to your own first name when pitching as someone else.",
+  "salesperson_first_name": null,
+
   "slug": null
 }
