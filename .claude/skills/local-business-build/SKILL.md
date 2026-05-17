@@ -1,6 +1,6 @@
 ---
 name: local-business-build
-description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Plumbers are the only supported trade in v1; for any other trade, complete the build with plumber defaults and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. Claude does the generation itself -- this skill does NOT call OpenRouter, Flux, or any external LLM/image API. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
+description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Plumbers are the only supported trade in v1; for any other trade, complete the build with plumber defaults and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. Claude does the HTML generation itself -- this skill does NOT call OpenRouter, Flux, or any LLM/image-generation API. It MAY call the Unsplash photo-library API for hero images when `UNSPLASH_ACCESS_KEY` is set (free, 50 req/hr); falls back to a placeholder with manual-fetch suggestions when absent. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
 ---
 
 # Local Business Site Builder
@@ -30,6 +30,13 @@ deployment. It requires:
   instead of writing to disk.
 - **`vercel` CLI** if and only if the user asks to deploy. See the
   Optional: Deploy to Vercel section for the preflight check.
+- **`UNSPLASH_ACCESS_KEY` env var** (optional, recommended). When set,
+  the skill fetches a trade-appropriate hero photo from Unsplash and
+  injects the remote URL into the HTML's `background-image`. When
+  unset, the hero falls back to a `images/hero.jpg` placeholder and
+  the report tells the user to drop one in manually. See the Hero
+  image handling section for the full priority order and the API
+  workflow.
 
 ---
 
@@ -158,25 +165,170 @@ constraints:
 
 ---
 
-## Hero image handling (no auto-generation)
+## Hero image handling
 
-This skill does NOT call any image generation API. Three ways to handle
-the hero:
+Fetch a trade-appropriate hero photo from Unsplash and inject the URL
+directly into the HTML. No file download needed -- the URL is used as
+the CSS background-image value. Works for both local preview and Vercel
+deployment as long as the page has internet access.
 
-1. **Prospect provided photos**: if `prospect.photos[]` contains an entry
-   with `context: "hero"` or `context: "background"`, use that URL directly
-   as the hero background-image.
-2. **No prospect photos**: emit
-   `style="background-image: url('images/hero.jpg')"` as the hero background,
-   and tell the user explicitly:
-   - The site references `outputs/builds/<slug>/images/hero.jpg` but that
-     file doesn't exist yet
-   - Suggest 2-3 Unsplash search URLs the user can pick from manually
-     (e.g. `https://unsplash.com/s/photos/plumber-service-truck`,
-     `https://unsplash.com/s/photos/copper-pipe-installation`)
-   - The user drops their chosen image at the suggested path before deploy
-3. **For headless / batch use**, refer the user to `build.py` which calls
-   Flux 2 via OpenRouter. Trade-off: image gen costs ~$0.05-0.10 per build.
+---
+
+### Priority order
+
+1. **Prospect-provided photo** -- if `prospect.photos[]` contains an entry
+   with `context: "hero"` or `context: "background"`, use that URL verbatim.
+   Skip all steps below.
+
+2. **Unsplash API** -- if `UNSPLASH_ACCESS_KEY` env var is set, fetch a
+   photo using the trade query from `07-industry-defaults.md`.
+
+3. **Manual fallback** -- if neither is available, emit a placeholder
+   and report to the user (see Manual Fallback below).
+
+---
+
+### Step A -- Preflight
+
+```bash
+echo $UNSPLASH_ACCESS_KEY
+```
+
+If empty, skip to Manual Fallback. Do NOT proceed with the API call.
+
+---
+
+### Step B -- Build the search query
+
+Read `prospect.trade`, look up `hero_search_query` in
+`references/07-industry-defaults.md` for that trade.
+
+Example entry in 07 (plumber):
+```
+hero_search_query: "plumber service truck residential work"
+```
+
+If the trade is not in 07, construct a safe fallback:
+`"{trade} professional service work"`
+
+Never include the business name, phone number, or any text that
+would appear in the image. Unsplash is a photo library -- these
+fields don't affect results and can break the query.
+
+---
+
+### Step C -- Fetch from Unsplash
+
+```python
+import os, requests
+
+query      = "<hero_search_query from 07>"
+access_key = os.environ["UNSPLASH_ACCESS_KEY"]
+
+r = requests.get(
+    "https://api.unsplash.com/search/photos",
+    headers={"Authorization": f"Client-ID {access_key}"},
+    params={
+        "query":       query,
+        "per_page":    1,
+        "orientation": "landscape",
+        "content_filter": "high"
+    }
+)
+
+results = r.json().get("results", [])
+
+if not results:
+    # fall through to Manual Fallback
+    raise ValueError(f"No Unsplash results for query: {query}")
+
+photo      = results[0]
+hero_url   = photo["urls"]["regular"]
+photo_id   = photo["id"]
+credit     = photo["user"]["name"]
+credit_url = photo["user"]["links"]["html"]
+
+# Trigger required download event (Unsplash API terms)
+requests.get(
+    photo["links"]["download_location"],
+    headers={"Authorization": f"Client-ID {access_key}"}
+)
+
+print(f"[+] Hero photo: {hero_url}")
+print(f"[+] Credit: {credit} ({credit_url})")
+```
+
+---
+
+### Step D -- Inject into HTML
+
+Use `hero_url` as the hero section background:
+
+```html
+style="background-image: url('{{ hero_url }}')"
+```
+
+Add attribution to the deployment comment block at the top of the HTML:
+
+```html
+<!--
+  ...existing deployment fields...
+  Hero photo: {{ credit }} via Unsplash ({{ credit_url }})
+  Photo ID:   {{ photo_id }}
+-->
+```
+
+Attribution goes in the comment block only -- do NOT render it
+visibly on the page. The prospect's brand is the focus.
+
+---
+
+### Manual fallback (no API key or zero results)
+
+Emit the placeholder URL and report:
+
+```html
+style="background-image: url('images/hero.jpg')"
+```
+
+Report to user:
+```
+[!] Hero image not fetched -- UNSPLASH_ACCESS_KEY not set or query returned
+    no results.
+    Query attempted: "<query string>"
+    The site references images/hero.jpg which does not exist yet.
+    Suggested Unsplash search URLs to find one manually:
+      https://unsplash.com/s/photos/<trade>-service-truck
+      https://unsplash.com/s/photos/<trade>-professional-work
+    Drop your chosen image at: outputs/builds/<slug>/images/hero.jpg
+    before deploying.
+```
+
+---
+
+### Rate limits and cost
+
+- Free Unsplash developer account: 50 requests/hour
+- Cost per image fetch: $0.00
+- For batch runs (5+ prospects in one session), use `build.py` which
+  manages rate limiting. The skill does not throttle -- back-to-back
+  runs against the free tier will exhaust the hourly limit fast.
+- Production / agency volume: apply for Unsplash Production status
+  (free, requires approval) to raise limits.
+
+---
+
+### Adding hero_search_query to 07-industry-defaults.md
+
+Each trade entry in 07 needs a `hero_search_query` field. Current coverage:
+
+| Trade    | Query                                      | Status  |
+|----------|--------------------------------------------|---------|
+| plumber  | "plumber service truck residential work"   | defined |
+
+Add a row to this table and the corresponding field in 07 whenever a
+new trade is onboarded. The skill reads from 07 -- no changes needed
+here.
 
 ---
 
