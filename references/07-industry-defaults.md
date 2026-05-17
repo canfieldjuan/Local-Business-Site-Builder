@@ -175,9 +175,34 @@ If prospect didn't specify, use:
 If prospect didn't specify, use a 20-mile radius from the listed city.
 Phrase as: `Serving [CITY] and surrounding communities within 20 miles`.
 
-### Image generation prompts
+### Hero image source -- two paths
 
-Default hero prompt template:
+**Path 1 -- Unsplash photo library (skill default; build.py-compatible)**
+
+The `local-business-build` Claude Code skill (and any future
+Unsplash-aware build pipeline) fetches a hero from Unsplash using a
+trade-specific search query. The skill reads this field per-trade:
+
+```
+hero_search_query: "plumber service truck residential work"
+```
+
+Why these terms: "plumber" anchors the trade. "service truck" and
+"residential work" filter for the kind of imagery that fits a local
+business (work vans in driveways, copper pipework in homes) rather
+than industrial-scale or commercial-site photos. Avoid words like
+"team" (returns groups in branded uniforms) or "professional" alone
+(returns office stock).
+
+Do NOT include the business name, city, or any text that would appear
+in the image. Unsplash is a photo library -- those words don't
+improve results and can break the query.
+
+**Path 2 -- generated hero image (legacy build.py path via Flux 2)**
+
+For `build.py` runs with `UNSPLASH_ACCESS_KEY` unset, the existing
+Flux 2 image-generation prompt remains. Default hero prompt template:
+
 ```
 Professional photorealistic hero image for a local plumbing business in
 [CITY]. Wide cinematic crop, golden-hour natural light, depth of field.
@@ -190,6 +215,10 @@ wearing branded apparel from any specific company.
 Why no faces / branded apparel: the same image gets reused across multiple
 prospects in this trade, and we don't want any prospect to feel the photo
 is "of someone else's business." Generic-but-professional wins.
+
+The Unsplash path (Path 1) is preferred when available -- it's free,
+fast, and produces real photography. The Flux path (Path 2) is the
+fallback when no Unsplash key is configured.
 
 ### Page set for MVP
 
