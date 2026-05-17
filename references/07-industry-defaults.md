@@ -126,8 +126,20 @@ See 06-build-prompt.md SECTION ARCHITECTURE for exact markup patterns.
    Subhead names the service-area cities -- those cities are NOT repeated
    anywhere else on the page.
 4. Coverage band (slim strip: "Not sure if we cover your area? Call <phone>")
-5. Services grid (3 columns desktop, 1 column mobile, 6-8 services)
-6. Why choose us / differentiators (3-4 cards: response time, pricing, local, warranty)
+5. Services grid (3 columns desktop, 1 column mobile, EXACTLY 6 services).
+   6 fills the grid as 2 clean rows of 3 -- 7 or 8 leaves an orphan
+   trailing cell that reads as a layout bug. Prospect-specified
+   services win; if the prospect supplied more than 6, pick the 6
+   with highest commercial value (emergency + replacement work over
+   small-ticket fixture jobs). The default 6 for a plumber when the
+   prospect list is sparse: Emergency Leak Repair, Water Heater
+   Repair & Install, Drain Cleaning, Sewer Line Repair, Sump Pump
+   Service, Toilet Repair & Install. (Faucet & Fixture Replacement
+   and Garbage Disposal stay in the canonical catalog above for
+   prospects who explicitly ask for them.)
+6. Why choose us / differentiators (EXACTLY 3 cards, wrapped in
+   <section class="section-band">. Consolidate overlapping claims --
+   "family-owned" + "licensed/insured/local" become ONE card, not two.)
 7. Customer Reviews -- three branches (see 06-build-prompt.md for full
    markup):
    - 3+ entries in prospect.reviews -> card grid with quote cards plus
