@@ -276,13 +276,19 @@ def main(prospect_json_path):
     else:
         try:
             email_md = generate_email_draft(prospect)
-            if "[VERCEL_URL_PLACEHOLDER]" not in email_md:
-                # The token is the handoff point for the post-deploy URL.
-                # A single model miss makes the draft unusable. Treat as
-                # a generation failure rather than writing a broken draft.
+            # Verify the [VERCEL_URL_PLACEHOLDER] token survived in the BODY
+            # (not just in the "Before sending" checklist, which always
+            # contains it because the prompt template instructs the model
+            # to include it there). Split on the "Before sending" marker
+            # and check the body portion only -- if the body is missing
+            # the token, the salesperson has no handoff point for the
+            # deployed URL and the draft is unusable.
+            body_portion = re.split(r"##\s*Before sending", email_md, maxsplit=1)[0]
+            if "[VERCEL_URL_PLACEHOLDER]" not in body_portion:
                 raise ValueError(
-                    "Generated draft is missing the [VERCEL_URL_PLACEHOLDER] token; "
-                    "salesperson would have no place to insert the deployed URL."
+                    "Generated draft is missing the [VERCEL_URL_PLACEHOLDER] token "
+                    "in the email body (the checklist alone does not count). "
+                    "Salesperson would have no place to insert the deployed URL."
                 )
             with open(email_path, "w") as f:
                 f.write(email_md)

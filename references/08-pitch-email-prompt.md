@@ -83,7 +83,7 @@ strongest available, do NOT stack more than two of them.
 |---|---|---|
 | Longevity | `years_in_business >= 10` | "You've been at this for [N] years without a website. The work speaks for itself." |
 | Review score | `google_review_score >= 4.0` AND `google_review_count >= 5` | "Your [SCORE]/5 from [COUNT] Google reviews tells me people who find you are happy. I'd like more of them finding you." |
-| Trade competition | Always available, but phrase as observation NOT specific SERP claim or outcome promise | "When customers in [CITY] search '[TRADE] near me,' the national chains crowd the top of the page. Without a site, you're hard to find." (Do NOT claim a specific number of results, a specific competitor's rank, or that this site will rank above any competitor. State the visibility problem; do not promise a ranking outcome.) |
+| Discoverability | Last-resort fallback ONLY if no other hook triggers. NEVER make claims about specific SERP positions, competitor rankings, the number of results, or what national chains are doing in any city. | "Customers looking for a [TRADE] online have nowhere to land when they search for you. This gives them a place to land, a phone number to tap, and a form they can fill out at 10pm." (Talk about the prospect's own reachability -- a known fact about not having a website. Do NOT describe what Google shows, what competitors rank for, or what "the top of the page" looks like in any city. Those are unverifiable SERP claims and violate the fabrication guard below.) |
 | 24/7 availability | `has_24_7: true` | "I noticed you're 24/7. People searching at 11pm need to find you fast -- the phone in the hero is one tap on mobile." |
 | Family-owned | `family_owned: true` | "Made the family-owned thing obvious throughout -- not buried in fine print." |
 
@@ -115,15 +115,33 @@ clearly delineated for the salesperson:
 
 ### Subject line
 
-Use one of (pick based on what data you have):
-- `Built a [TRADE] website for [BUSINESS_NAME_TITLE_CASE]` -- default
-- `A free draft for [BUSINESS_NAME_TITLE_CASE]` -- if you want it
-  softer/less assertive
-- `[CITY] [TRADE] -- quick look at something I made` -- if leading
-  with city is stronger
+Pick a template, then COUNT the words in the resulting subject. If
+the total is 10 or more words, fall back to a shorter template. The
+hard ceiling is 9 words.
+
+Templates in order of preference:
+
+1. `Built a [TRADE] website for [BUSINESS_NAME_TITLE_CASE]` -- default
+   (works when the business name is 1-4 words after suffix-stripping)
+2. `A free draft for [BUSINESS_NAME_TITLE_CASE]` -- 4 fixed words +
+   business name; works for business names up to 5 words
+3. `[BUSINESS_NAME_TITLE_CASE] -- new website` -- 2 fixed words +
+   business name; works for business names up to 7 words
+4. `Quick look: [BUSINESS_NAME_TITLE_CASE]` -- 2 fixed words +
+   business name; works for business names up to 7 words
+
+ALGORITHM:
+- Start with template 1. Count words. If <= 9, use it.
+- If > 9, try template 2, then 3, then 4 in that order.
+- All four templates above will produce a <= 9-word subject for any
+  business name up to 7 words. If the business name itself exceeds
+  7 words (rare), use template 3 or 4 and truncate the business
+  name at a natural word boundary (e.g. drop trailing words like
+  "Services", "Solutions", "Company") rather than mid-word.
 
 Apply the brand display rule from `06-build-prompt.md`: title-case
-the business name, strip legal suffixes ("Inc.", "LLC", "Co.").
+the business name, strip legal suffixes ("Inc.", "LLC", "Co.")
+BEFORE counting words.
 
 ### Body structure
 
@@ -156,8 +174,9 @@ Built a website for Drees Plumbing on spec. It's live:
 
 No charge to look. If the design works for you, I host it for you
 for $15/year (just the domain -- no monthly fee, no platform
-lock-in). When folks in Effingham search "plumber near me," the
-national chains crowd the page. Without a site, you're hard to find.
+lock-in). Right now, anyone searching for you online has nowhere to
+land -- no phone to tap, no form to fill out at 10pm. This gives
+them one.
 
 Take a look or don't. Either way no follow-up unless you say
 "yeah, let's talk."
@@ -165,9 +184,9 @@ Take a look or don't. Either way no follow-up unless you say
 -- Juan
 ```
 
-That's the target. ~75 words, 5 short sentences, one observation
-about visibility (NOT a specific SERP claim, NOT a ranking promise),
-explicit exit clause.
+That's the target. ~75 words, 5 short sentences, frames the
+prospect's OWN reachability (a fact: they have no website), NOT
+what Google shows or where competitors rank. Explicit exit clause.
 
 ### Drafted output when data is sparse
 

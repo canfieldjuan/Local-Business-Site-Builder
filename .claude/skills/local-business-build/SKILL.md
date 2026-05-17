@@ -299,7 +299,11 @@ first because:
 - Flux / OpenRouter image generation — use `build.py` for headless mode.
 - Automatic Vercel deployment — confirm first.
 - Formspree account creation — user does that, pastes endpoint into JSON.
-- Pitch email to the prospect — that's still in `build.py`.
+- Auto-send pitch emails — the skill generates `email_draft.md` containing
+  the pitch body and pre-send checklist, but the user manually sends from
+  their own email client (Gmail, Outlook, etc.). No Resend, no SMTP, no
+  automated send path. See the "Generate the pitch email draft" section
+  above for what the skill *does* produce.
 
 ---
 
