@@ -390,7 +390,7 @@ inside label text reads "{N}-MILE RADIUS" where N is
     <circle cx="80" cy="55" r="26" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
     <circle cx="80" cy="55" r="4" fill="var(--accent)"/>
     <circle cx="80" cy="55" r="9" fill="none" stroke="var(--accent)" stroke-width="1" opacity="0.5"/>
-    <text x="80" y="18" text-anchor="middle" font-family="inherit" font-size="8" font-weight="700" fill="currentColor" opacity="0.7" letter-spacing="0.8">[N]-MILE RADIUS</text>
+    <text x="80" y="10" text-anchor="middle" font-family="inherit" font-size="8" font-weight="700" fill="currentColor" opacity="0.7" letter-spacing="0.8">[N]-MILE RADIUS</text>
   </svg>
   <ul class="ft-links">
     <!-- 3-4 list items max; consolidate "City1 &middot; City2" pairs to keep the list short -->
