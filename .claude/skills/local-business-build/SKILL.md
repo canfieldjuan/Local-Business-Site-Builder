@@ -32,11 +32,17 @@ deployment. It requires:
   Optional: Deploy to Vercel section for the preflight check.
 - **`UNSPLASH_ACCESS_KEY` env var** (optional, recommended). When set,
   the skill fetches a trade-appropriate hero photo from Unsplash and
-  injects the remote URL into the HTML's `background-image`. When
-  unset, the hero falls back to a `images/hero.jpg` placeholder and
-  the report tells the user to drop one in manually. See the Hero
-  image handling section for the full priority order and the API
-  workflow.
+  injects the remote URL into the HTML's `background-image`. The key
+  is read in this priority order, first match wins: (a) the shell
+  environment that launched Claude Code; (b) a `UNSPLASH_ACCESS_KEY=...`
+  line in `.env` at the project root (the skill loads this itself via
+  Bash before the preflight -- `.env` does NOT auto-load into a fresh
+  shell). The variable name must be exactly `UNSPLASH_ACCESS_KEY` --
+  generic names like `ACCESS_KEY` are unsafe and unsupported. When
+  neither source has the key, the hero falls back to a
+  `images/hero.jpg` placeholder and the report tells the user to drop
+  one in manually. See the Hero image handling section for the full
+  priority order and the API workflow.
 
 ---
 
@@ -202,11 +208,77 @@ deployment as long as the page has internet access.
 
 ### Step A -- Preflight
 
+The Unsplash key may live in either the shell environment OR in a
+local `.env` file at the project root. `.env` does NOT auto-load into
+a fresh Bash shell -- only `python-dotenv` reads it, and only when
+build.py / pipeline.py / anything that imports `lib.clients` runs.
+The skill executes via Bash directly, so we have to load `.env` here
+ourselves before the preflight check.
+
 ```bash
-echo $UNSPLASH_ACCESS_KEY
+# 1. If the var isn't in the shell environment yet, try to read it
+#    from .env. The extraction mirrors python-dotenv's tolerance for
+#    common .env variants:
+#      - whitespace around the '=' is allowed (KEY = value)
+#      - trailing inline comments preceded by whitespace are stripped
+#        ('KEY=value # comment' -> 'value')
+#      - trailing CR (Windows line endings) is stripped
+#      - leading/trailing whitespace around the value is stripped
+#      - one layer of surrounding quotes ("..." or '...') is stripped
+#      - embedded '=' in the value is preserved (split only on first '=')
+if [ -z "$UNSPLASH_ACCESS_KEY" ] && [ -f .env ]; then
+    export UNSPLASH_ACCESS_KEY="$( \
+        grep -E '^[[:space:]]*UNSPLASH_ACCESS_KEY[[:space:]]*=' .env \
+        | head -1 \
+        | cut -d= -f2- \
+        | sed -E 's/[[:space:]]+#.*$//' \
+        | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' \
+        | sed -E 's/\r$//' \
+        | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/' \
+    )"
+fi
+
+# 2. Branch: if still empty AFTER the .env attempt, take the Manual
+#    Fallback path. Otherwise, proceed with the Unsplash API workflow.
+#    The else clause is what gates the success message; without it,
+#    the success line would print on every path including the empty
+#    one, which would mislead any later step into running the API call.
+if [ -z "$UNSPLASH_ACCESS_KEY" ]; then
+    echo "[*] UNSPLASH_ACCESS_KEY not set in shell or .env; using manual fallback"
+    # Control transfer: do NOT continue to Step B / C / D below.
+    # Skip directly to the Manual Fallback subsection further down.
+else
+    echo "[*] UNSPLASH_ACCESS_KEY loaded; proceeding with Unsplash API fetch"
+fi
 ```
 
-If empty, skip to Manual Fallback. Do NOT proceed with the API call.
+**How Claude must interpret the empty-key branch**: when the
+`[ -z "$UNSPLASH_ACCESS_KEY" ]` branch fires, treat the Unsplash
+API workflow as TERMINATED. Step B (build the search query from
+`07-industry-defaults.md`) STILL RUNS in this branch -- the Manual
+Fallback report below needs the query string to display the
+"Query attempted: ..." line and the suggested manual Unsplash
+search URLs. Step B is pure data prep, not an API call, so it's
+always safe to run. But Steps C (fetch from Unsplash) and D
+(inject the API-returned URL into HTML) MUST NOT execute -- the
+preflight just told you there's no way to authenticate. Jump
+straight from Step B to the Manual Fallback subsection and emit
+the placeholder URL + the fallback report.
+
+The success message inside the `else` branch is the only signal
+that Steps C-D should run with API calls.
+
+**Key naming**: the variable MUST be named exactly `UNSPLASH_ACCESS_KEY`
+in `.env`. Generic names like `ACCESS_KEY` are unsafe (collide with
+AWS credentials and other SDKs that auto-read `ACCESS_KEY`) and the
+preflight grep above won't match them. If the user has `ACCESS_KEY=...`
+in their `.env`, tell them to rename it to `UNSPLASH_ACCESS_KEY` before
+the skill can use it.
+
+Only the Unsplash **Access Key** is needed (the public key used in the
+`Client-ID` header). `APPLICATION_ID` and `SECRET_KEY` from the Unsplash
+dashboard are NOT used by this skill -- they're only relevant for OAuth
+flows which are out of scope.
 
 ---
 
