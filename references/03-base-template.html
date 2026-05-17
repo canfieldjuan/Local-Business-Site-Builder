@@ -1148,6 +1148,15 @@ img { display: block; max-width: 100%; }
   .trust-strip-inner { gap: 1rem; overflow-x: auto; }
   .trust-item + .trust-item { padding-left: 1rem; }
   .dual-cta-hero { padding: 2.5rem 0 2rem; }
+  /* Mobile hero overlay override: the desktop left-to-right gradient
+     fades to 5% on the right, which is fine when the text column has
+     a constrained max-width and sits on the dark left side. On mobile
+     the headline spans the full viewport and can land over the bright
+     photo edge, so fall back to a top-to-bottom overlay that keeps
+     white text legible across the entire width. */
+  .hero-fullbleed::before {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.40) 100%);
+  }
   .dual-cta-row  { flex-direction: column; align-items: flex-start; }
   .cta-emergency, .cta-planned { width: 100%; justify-content: center; }
   .cta-or        { display: none; }
@@ -1576,9 +1585,17 @@ img { display: block; max-width: 100%; }
    grid never has an orphan trailing cell. */
 .benefits-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 2px;
   background: var(--border);
+}
+/* Modifier for the from-scratch build's Why-Choose-Us section, which
+   uses EXACTLY 3 cards (see 06-build-prompt.md). Single-service interior
+   pages keep the default 2-col grid so a 4-card benefits section doesn't
+   orphan to a 3+1 layout. Use `class="benefits-grid benefits-grid--three"`
+   in the build prompt's Why-Choose-Us markup. */
+.benefits-grid--three {
+  grid-template-columns: repeat(3, 1fr);
 }
 .benefit-card {
   background: var(--bg-card);
@@ -1723,7 +1740,11 @@ img { display: block; max-width: 100%; }
    FOOTER COVERAGE MAP -- small dashed-radius SVG that visualises the
    service area in the footer's right column. Render above the city
    list. The label text inside the SVG should be the actual radius
-   (e.g. "25-MILE RADIUS") interpolated from prospect.service_radius_miles.
+   (e.g. "25-MILE RADIUS") -- the build prompt extracts the integer
+   from prospect.service_radius (a free-form string like "Effingham
+   and surrounding communities within 25 miles"). When no integer is
+   present in the string, fall back to "SERVICE AREA" rather than
+   fabricating a default.
    ================================================================ */
 .ft-coverage-map {
   width: 100%;

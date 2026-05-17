@@ -54,14 +54,16 @@ absent, fall through to the next tier.
 **Tier 1 -- Established (years_in_business >= 8):**
 
 This tier wins even when has_24_7 is true. An 8+ year track record
-beats "we're available 24/7" on credibility, and 24/7 still gets named
-in the subhead. Trying to out-emergency Roto-Rooter in the headline is
-a losing position for a local plumber; trying to out-trust them on
+beats "we're available 24/7" on credibility. When has_24_7 is true,
+the 24/7 claim is carried by the `.hero-chip` eyebrow badge above the
+headline (see 06-build-prompt.md HERO CHIP rule) -- do NOT duplicate
+it in the subhead. Trying to out-emergency Roto-Rooter in the headline
+is a losing position for a local plumber; trying to out-trust them on
 locality and tenure is winnable.
 
 - Headline: `[CITY]'s Trusted Plumber Since [YEAR]`
-- Subhead (24/7 yes): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. 24/7 emergency service available. Licensed, insured, family-owned.`
-- Subhead (24/7 no): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. Licensed, insured, family-owned. Free estimates.`
+- Subhead (any value of has_24_7): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. Licensed, insured, family-owned.`
+  (If has_24_7 is false, append: ` Free estimates.`)
 
 **Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
 

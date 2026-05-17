@@ -128,10 +128,13 @@ PROSPECT_JSON. For plumbers, that is:
    ```
    Where `phone_digits` is the prospect phone with all non-digit chars
    stripped (for the `tel:` link).
-5. Services grid (`.services-grid` / `.service-card`) -- 6-8 services
-   from prospect.services (top priority), augmented from the
-   INDUSTRY_DEFAULTS canonical service catalog if the prospect list is
-   sparse. Each card: service name, one-line description.
+5. Services grid (`.services-grid` / `.service-card`) -- EXACTLY 6
+   services (matches INDUSTRY_DEFAULTS rule: 6 fills the grid as 2
+   clean rows of 3; 7 or 8 leaves an orphan trailing cell). Prospect-
+   specified services win; if prospect supplied more than 6, pick the
+   6 with highest commercial value per INDUSTRY_DEFAULTS guidance. If
+   fewer than 6, augment from the canonical service catalog. Each
+   card: service name, one-line description.
 6. Why choose us -- EXACTLY 3 differentiators (the `.benefits-grid` is
    a 3-column desktop grid; 4 cards leaves an orphan trailing cell).
    Wrap the whole section in `<section class="section-band">` instead
@@ -146,7 +149,7 @@ PROSPECT_JSON. For plumbers, that is:
        <div class="sec-hd">
          <span class="sec-title"><span class="sec-dot"></span>Why Choose Us</span>
        </div>
-       <div class="benefits-grid">
+       <div class="benefits-grid benefits-grid--three">
          <!-- exactly 3 .benefit-card entries -->
        </div>
      </div>
@@ -345,7 +348,9 @@ Left column (brand) markup:
 
 ```html
 <div>
-  <div class="ft-brand-name">[PROSPECT.business_name]</div>
+  <div class="ft-brand-name">[PROSPECT.business_name -- apply the
+    Brand display rule from the SYSTEM PROMPT: title-case, strip
+    legal suffixes ("Inc.", "LLC", "Co.")]</div>
   <div class="ft-tagline">[Short tagline, e.g. "[CITY]'s Trusted [TRADE]"]</div>
   <span class="ft-phone-label">[label, e.g. "Call us 24/7" if has_24_7 else "Call us"]</span>
   <a href="tel:[phone_digits]" class="ft-phone">[PROSPECT.phone]</a>
@@ -379,13 +384,19 @@ data supports.
 When the right column is "Service Area", render a small `.ft-coverage-map`
 SVG above the `.ft-links` list. The SVG visualises the coverage radius
 as concentric dashed/solid circles with a center pin in --accent. The
-inside label text reads "{N}-MILE RADIUS" where N is
-`prospect.service_radius_miles` (default 20 if absent). Markup:
+inside label text reads "[N]-MILE RADIUS" where N is the numeric mile
+count extracted from `prospect.service_radius` (a free-form string).
+Look for patterns like "within 25 miles", "25-mile radius", or
+"25mi"; pull the integer. If `prospect.service_radius` is absent or
+no number is found, render "SERVICE AREA" instead of "[N]-MILE
+RADIUS" so the label stays honest. (Do NOT default to a fabricated
+mile count like 20 -- that misrepresents coverage.) Markup:
 
 ```html
 <div>
   <div class="ft-col-title">Service Area</div>
-  <svg class="ft-coverage-map" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <svg class="ft-coverage-map" viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ft-coverage-title">
+    <title id="ft-coverage-title">[N]-mile service area centered on [PROSPECT.city], [PROSPECT.state]</title>
     <circle cx="80" cy="55" r="40" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity="0.35"/>
     <circle cx="80" cy="55" r="26" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
     <circle cx="80" cy="55" r="4" fill="var(--accent)"/>
