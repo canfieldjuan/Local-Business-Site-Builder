@@ -1,6 +1,6 @@
 ---
 name: local-business-build
-description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Plumbers are the only supported trade in v1; treat any other trade with the same workflow but flag that the industry-defaults file only covers plumbing. Claude does the generation itself -- this skill does NOT call OpenRouter, Flux, or any external LLM/image API. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
+description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Plumbers are the only supported trade in v1; for any other trade, complete the build with plumber defaults and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. Claude does the generation itself -- this skill does NOT call OpenRouter, Flux, or any external LLM/image API. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
 ---
 
 # Local Business Site Builder
@@ -14,6 +14,22 @@ The reference files (03, 06, 07, 08) are the single source of truth and are
 shared with the `build.py` Python pipeline and the Claude Design project.
 Edit those files to change behavior; this SKILL.md only describes the
 workflow, not the rules themselves.
+
+---
+
+## Runtime requirements
+
+This skill writes files to disk (`outputs/builds/<slug>/index.html`,
+optional `email_draft.md`) and may shell out to the Vercel CLI for
+deployment. It requires:
+
+- **Computer use / Bash access** (not a pure-chat context). Without it,
+  the skill can still produce the HTML in the conversation but cannot
+  persist anything or deploy. If the calling context has no file-write
+  capability, tell the user upfront and offer to print the HTML inline
+  instead of writing to disk.
+- **`vercel` CLI** if and only if the user asks to deploy. See the
+  Optional: Deploy to Vercel section for the preflight check.
 
 ---
 
@@ -201,8 +217,21 @@ Hard rules from `08`:
 - Explicit "no follow-up unless you say so" exit clause
 - Never fabricate metrics, review quotes, or outcome promises
 
-If the user invokes the skill with the equivalent of `--skip-email-draft`,
-skip this step.
+### Natural-language triggers for skipping
+
+In a Claude Code chat, the user won't type `--skip-email-draft`. Treat
+any of the following as the skip signal and only write `index.html`:
+
+- "skip the email"
+- "no email draft"
+- "just the HTML" / "just the site" / "website only"
+- "no pitch email"
+- "don't generate the email"
+
+When you skip, also delete any pre-existing
+`outputs/builds/<slug>/email_draft.md` from a prior build so a stale
+draft doesn't sit next to the fresh `index.html`. Mirror the
+`build.py` behavior exactly.
 
 ---
 
@@ -218,24 +247,48 @@ After writing the file, print a short summary to the user:
   outputs/builds/<slug>/images/hero.jpg"
 - Formspree endpoint status: "real endpoint set" / "placeholder — update
   before sharing"
+- **If `prospect.trade != "plumber"`**, ALSO print verbatim:
+  `[!] Trade mismatch: industry-defaults.md covers plumbing only. Section`
+  `    order, canonical service catalog, hero copy templates, trust signal`
+  `    priority, theme, and default palette were all derived from plumber`
+  `    defaults. Review the output for trade-appropriate copy before sharing.`
+  This is the trade-mismatch warning referenced in the skill description.
+  Do NOT silently render a non-plumber site using plumber defaults — the
+  warning is the user's signal to manually review and adjust.
 - Reminder: open the file in a browser to preview before sharing
 
 ---
 
 ## Optional: deploy to Vercel
 
-If the user explicitly asks to deploy, run via Bash:
+If the user explicitly asks to deploy, run via Bash. First, preflight
+the Vercel CLI — bailing here is much friendlier than a cryptic
+"command not found" mid-deploy:
+
+```
+which vercel >/dev/null 2>&1 || { echo "[!] vercel CLI not found -- install with: npm i -g vercel"; exit 1; }
+vercel whoami >/dev/null 2>&1 || { echo "[!] vercel CLI not authenticated -- run: vercel login"; exit 1; }
+```
+
+If either preflight fails, report the message to the user and STOP.
+Do not attempt the deploy. The user runs the install / login command,
+then asks you to retry.
+
+Once preflight passes, deploy:
 
 ```
 cd outputs/builds/<slug>
 vercel --prod --yes --name <slug>
 ```
 
-This requires `vercel` CLI installed and authenticated. Do NOT run
-automatically — confirm with the user first because:
-- Deployment is publicly visible
-- The Formspree endpoint and phone number become live
+Do NOT run any of this automatically — always confirm with the user
+first because:
+- Deployment is publicly visible on a `.vercel.app` subdomain
+- The Formspree endpoint and phone number become live (real customers
+  could submit the form)
 - A placeholder hero image would deploy as a broken image
+- The `--name <slug>` creates / reuses a Vercel project of that name
+  on the user's account
 
 ---
 
