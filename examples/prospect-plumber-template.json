@@ -1,0 +1,72 @@
+{
+  "_comment": "TEMPLATE -- copy this file, rename to <prospect-slug>.json, fill in real values. Required fields: business_name, trade, city, state, phone. Everything else is optional but more = better output.",
+
+  "business_name": "DREES PLUMBING INC",
+  "trade": "plumber",
+  "city": "Effingham",
+  "state": "IL",
+  "phone": "(217) 857-6642",
+
+  "owner_email": "owner@example.com",
+  "owner_first_name": "Brian",
+
+  "years_in_business": 12,
+  "established_year": 2011,
+
+  "family_owned": true,
+  "licensed_and_insured": true,
+  "has_24_7": true,
+
+  "service_radius": "Effingham, Mattoon, Vandalia, and surrounding communities within 25 miles",
+  "hours": "Mon-Fri 7am-6pm, Sat 8am-2pm, 24/7 emergency available",
+
+  "services": [
+    "Emergency Leak Repair",
+    "Water Heater Repair & Install",
+    "Drain Cleaning",
+    "Sewer Line Repair",
+    "Sump Pump Service",
+    "Garbage Disposal",
+    "Faucet & Fixture Replacement",
+    "Toilet Repair & Install"
+  ],
+
+  "address": "13162 N. 1800th St. Teutopolis IL 62467",
+  "google_business_url": null,
+  "google_review_score": 4.4,
+  "google_review_count": 12,
+
+  "_reviews_comment": "To render the card-grid treatment, fill in 3 reviews below using the example shape. Duplicate the object as many times as needed. Keep the field types exact: rating is an integer (5, not \"5\"); author/date/platform/text are plain strings. Any review entry that still contains the EXAMPLE or REPLACE marker is dropped automatically by build.py -- it will never render. 1 or 2 valid reviews falls back to the aggregate-only widget; 0 valid reviews + google_review_score set also falls back; both empty omits the section entirely.",
+  "reviews": [
+    {
+      "author": "Mari G.",
+      "rating": 5,
+      "date": "a year ago",
+      "platform": "Google",
+      "text": "My plumbing problem may not have been an emergency, but it was too me. When I first called and explained the issue, I was told that they would call me back and make an appointment. When they called back, it was too say that they could send a plumber right away. He was polite and efficient and fixed 2 separate problems. Thank you, Drees Plumbing, for your quick response! I will recommend your service to any one who needs a plumber!"
+    },
+    {
+      "author": "Judy W.",
+      "rating": 5,
+      "date": "3 years ago",
+      "platform": "Google",
+      "text": "Very good service. They responded promptly and fixed the problem. Thankful for Drees plumbing."
+    },
+    {
+      "author": "Mark W.",
+      "rating": 5,
+      "date": "4 years ago",
+      "platform": "Google",
+      "text": "As usual, repairs were made with great care and the service person was very polite and courteous!"
+    }
+  ],
+  "photos": [],
+
+  "brand_colors": null,
+  "theme_override": null,
+
+  "formspree_endpoint": "https://formspree.io/f/xnjraeqp",
+  "thank_you_url": null,
+
+  "slug": null
+}

@@ -1,0 +1,39 @@
+# Secrets -- NEVER commit
+.env
+.env.local
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Build outputs (per-prospect generated sites + mirrored images)
+outputs/
+
+# Vercel CLI state
+.vercel/
+
+# Playwright caches (only relevant if you re-render JS-heavy sites)
+playwright-report/
+test-results/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code per-user settings (skills/ stay tracked; settings.local.json is per-user)
+.claude/settings.local.json
+
+# OS junk
+.DS_Store
+Thumbs.db

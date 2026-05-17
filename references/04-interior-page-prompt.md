@@ -1,0 +1,305 @@
+# 04 -- Interior Page Prompt
+
+Run this once per interior page you want to redesign.
+Requires the homepage JSON from step 01 to stay design-consistent.
+Produces a complete HTML page that shares the same design system as the homepage.
+
+---
+
+## TWO MODES -- READ THIS FIRST
+
+Check `site_structure` in the homepage JSON before doing anything.
+
+**MODE A -- multi-page site** (`site_structure: "multi-page"` or `"mixed"`)
+The site has distinct URLs for interior pages.
+Check `pages_to_fetch` and look for items where `fetchable: true`.
+Fetch those URLs with web_fetch, then run this prompt with the fetched content.
+
+**MODE B -- single-page site** (`site_structure: "single-page"`)
+All content lives on the homepage. There are no separate URLs to fetch.
+Do NOT try to fetch nav links -- they are anchor links or javascript.
+Instead, use `single_page_sections` from the homepage JSON as your content source.
+Pick the section that matches the page type you want to generate, paste it below.
+No additional web fetching needed.
+
+**MODE C -- mixed site**
+Some pages are fetchable, some are anchors.
+For `fetchable: true` items: use Mode A.
+For `fetchable: false` items: use Mode B with the matching single_page_sections entry.
+
+---
+
+## WORKFLOW
+
+**Mode A:**
+1. Pick a page from `pages_to_fetch` where `fetchable: true` (start with priority 1)
+2. Fetch that URL with web_fetch
+3. Paste fetched content + homepage JSON into the USER PROMPT below
+4. Set CONTENT_SOURCE to "fetched-page"
+
+**Mode B / anchor-only pages:**
+1. Pick a section from `single_page_sections` in the homepage JSON
+2. Copy that section object
+3. Paste it into the SECTION CONTENT field below
+4. Set CONTENT_SOURCE to "homepage-section"
+5. No web_fetch needed
+
+---
+
+## WHAT PAGES TO PRIORITIZE
+
+| Page type     | Why it matters to show clients                                          |
+|---------------|-------------------------------------------------------------------------|
+| contact       | Shows the conversion architecture -- dual CTA, form design, trust strip |
+| about         | Shows team trust-building, brand story, personality beyond a logo       |
+| services      | Shows depth -- they see their full offering organized and scannable      |
+| single-service| Demonstrates per-offering landing page value (SEO + conversion)         |
+| menu          | For restaurants: the #1 page visitors go to after homepage              |
+| faq           | Schema value + shows you think about the full site, not just the hero   |
+
+---
+
+## SYSTEM PROMPT
+
+You are a senior frontend developer specializing in multi-page website redesigns.
+You are given either a fetched interior page OR a section extracted from the homepage,
+plus the homepage design JSON. Your job is to produce a complete HTML redesign of
+an interior page.
+
+CRITICAL RULE: DO NOT WRITE CUSTOM CSS. You must strictly use the provided `03-base-template.html` as your framework. You will output the entire contents of `03-base-template.html`, only injecting the structured JSON content into the pre-defined HTML classes.
+- Do NOT invent new classes or layout structures.
+- Do NOT write new CSS rules (other than populating the :root block).
+- You are an injection engine: map the content to the existing template blocks.
+- Uses only real content from the provided source.
+
+When CONTENT_SOURCE is "homepage-section":
+The content comes from a section of the homepage HTML, not a full page.
+It may be less detailed than a dedicated page would be.
+Use everything available in the section data. Do not pad or invent.
+
+When CONTENT_SOURCE is "fetched-page":
+Use the full fetched page content. Extract all headings, body text, lists,
+form fields, images, and contact information present.
+
+In both modes:
+- Output ONLY raw HTML. No markdown code fences (no ```html, no ```), no
+  preamble like "Here is the interior page", no trailing commentary. The
+  first characters of your response must be `<!DOCTYPE html>` (or a leading
+  comment). The last characters must be `</html>`. Anything else causes a
+  parse failure downstream.
+- The nav and footer must match the homepage exactly (same links, same brand treatment)
+- Only the main content area changes per page type
+- Populate the :root token block verbatim from the homepage generation output
+- Apply the same `class="theme-light"` or `class="theme-dark"` to the `<body>` as the homepage
+- Same Google Fonts import as the homepage
+
+---
+
+## USER PROMPT
+
+PAGE TYPE: [INSERT page_type]
+PAGE URL: [INSERT URL if Mode A, or "n/a -- single-page site" if Mode B]
+CONTENT_SOURCE: [fetched-page OR homepage-section]
+NOTES: [any client-specific instructions or "none"]
+
+HOMEPAGE DESIGN JSON:
+[PASTE FULL JSON FROM STEP 01 HERE]
+
+BASE TEMPLATE:
+[PASTE 03-BASE-TEMPLATE.HTML HERE]
+
+---
+SOURCE CONTENT:
+[MODE A: paste web_fetch output here]
+[MODE B: paste the matching single_page_sections entry from the homepage JSON here]
+---
+
+---
+
+## PAGE TYPE LAYOUTS
+
+Use the layout spec that matches PAGE TYPE above.
+All layouts share: sticky nav (from homepage) + trust strip (from homepage) + footer.
+
+---
+
+### CONTACT PAGE
+
+Above the fold:
+- Headline: "Get in Touch" or "Contact {{SITE_NAME}}" -- short, not clever
+- Subheadline: response time promise if available ("We respond within 2 hours")
+  or hours of operation
+- Trust strip (same as homepage)
+
+Main layout -- two column (60/40 split):
+
+LEFT COLUMN -- Contact form:
+- Headline: specific action label ("Request a Free Quote", "Book a Consultation",
+  "Send Us a Message" -- match the site's conversion_profile.primary_goal)
+- Form fields: name, phone, email, message/issue -- max 5 fields
+- CTA button: first-person, specific ("Send My Request", "Get My Free Quote")
+  NOT "Submit" or "Contact Us"
+- Below the button: one trust signal line (review score or response time promise)
+
+RIGHT COLUMN -- Contact details:
+- Phone number (large, clickable tel: link)
+- Email address
+- Physical address with embedded Google Maps link or static map image
+- Hours of operation (structured, not a paragraph)
+- If multiple locations: repeat per location
+
+Below the two columns (full width):
+- FAQ strip if any FAQ content exists on the page
+- Social links if present
+
+---
+
+### ABOUT PAGE
+
+Above the fold:
+- Headline: "[Site Name] -- [City]'s [Brief Descriptor]"
+  e.g. "Steffen Heating -- Effingham's HVAC Experts Since 1987"
+- Subheadline: mission or brand promise in one line
+- Trust strip
+
+Main content -- single column with section breaks:
+
+SECTION 1 -- Story/Mission:
+- 2-3 paragraph company origin or mission statement (use verbatim from page if present)
+- Key stat callouts inline: years in business, customers served, etc. as large numbers
+
+SECTION 2 -- Team grid (if team info present):
+- Card per team member: photo (with onerror fallback), name, title, short bio
+- Grid: 3-col on desktop, 1-col on mobile
+- If no team info: skip this section
+
+SECTION 3 -- Values or differentiators:
+- 3-4 items as a horizontal card strip
+- Each: icon placeholder + label + one-line description
+- Use actual differentiators from the page content, not generic filler
+
+SECTION 4 -- Social proof:
+- Review highlights or testimonial quotes (verbatim from page)
+- If none exist: skip
+
+CTA at bottom:
+- Repeat the primary CTA from the homepage (dual CTA if urgency_type is emergency or both)
+- Trust signal immediately below it
+
+---
+
+### SERVICES PAGE
+
+Above the fold:
+- Headline: "Our Services" or more specific if the page has one
+- Subheadline: one-line value statement
+- Trust strip
+
+Main content:
+
+SERVICES GRID:
+- Card per service extracted from the page
+- Each card: service name (large), 2-line description, "Learn More" link if URL exists
+- Grid: 3-col desktop, 2-col tablet, 1-col mobile
+- Featured/primary service: span full width at top, larger treatment
+
+If the page has service detail beyond a list:
+- Use alternating image/text rows (image left + text right, then flip)
+- Each row: service name, description, key benefits as short list, CTA
+
+SERVICE AREA section (if locations/coverage mentioned):
+- Simple text list of coverage cities/areas
+- Or a callout box: "Serving [City], [City], and [City]"
+
+CTA at bottom:
+- Dual CTA (matches homepage urgency_type)
+- Trust signal below
+
+---
+
+### SINGLE SERVICE PAGE
+
+This is a landing page for one specific service.
+Highest conversion page type -- treat it accordingly.
+
+Above the fold:
+- Headline: service name + location (e.g. "AC Repair in Effingham, IL")
+- Subheadline: outcome or differentiator ("Same-day service, 100% satisfaction guaranteed")
+- Dual CTAs (always -- this is a conversion page)
+- Trust strip
+
+Content flow:
+
+SECTION 1 -- Problem/Need (why visitors are here):
+- 1-2 paragraphs addressing the pain point
+- Common symptoms or signs (as a scannable list if applicable)
+
+SECTION 2 -- Our Solution:
+- How the service works: 3-step process cards (simple, visual, numbered)
+- What's included in the service
+
+SECTION 3 -- Benefits:
+- 3-4 benefit cards: icon + headline + 1-line description
+- Use actual benefits from the page, not generic ones
+
+SECTION 4 -- Trust signals:
+- Review snippet relevant to this service (if available)
+- Certifications or warranties related to this service
+- Before/after or outcome callout if data exists
+
+SECTION 5 -- FAQ (if present on the page):
+- Accordion-style or simple Q&A list
+- Use verbatim questions and answers from the page
+
+SECTION 6 -- Related Services:
+- 2-3 cards linking to other services
+- Pulls from pages_to_fetch or nav items
+
+CTA at bottom:
+- Repeat dual CTA
+- Trust signal below
+
+---
+
+### MENU PAGE (restaurants)
+
+Above the fold:
+- Restaurant name + "Menu"
+- Hours + "Order Online" or "Reserve" button
+- Trust strip (rating + review count)
+
+Menu layout:
+- Category tabs or anchor links (Starters, Mains, Desserts, Drinks, etc.)
+- Each category as a section with clear heading
+- Item cards: name (bold) + description + price
+- Dietary tags inline (vegan, gf, spicy) as small pills
+- High-contrast, highly scannable -- this is a functional page, not decorative
+
+---
+
+### FAQ PAGE
+
+Above the fold:
+- Headline: "Frequently Asked Questions" or more specific if context allows
+- Optional: category filter buttons if many categories
+
+FAQ list:
+- Group by category if categories exist
+- Each Q&A: question as bold heading, answer as paragraph
+- Generous spacing -- this is a reading page
+- Anchor links at top if more than 8 questions
+
+CTA at bottom:
+- "Still have questions? [Contact CTA]"
+
+---
+
+## SHARED COMPONENT RULES (apply to all page types)
+
+Nav: exact same HTML and CSS as the homepage. Same links, same logo, same CTA.
+Footer: exact same HTML and CSS as the homepage.
+:root block: copy verbatim from homepage generation output.
+Trust strip: same as homepage. Present on every page.
+Mobile breakpoint: 768px, same rules as homepage.
+Image error handling: onerror="this.style.display='none'" on every img tag.
+No placeholder text anywhere. If content does not exist on the fetched page, omit the section.

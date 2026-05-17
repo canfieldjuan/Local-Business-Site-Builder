@@ -1,0 +1,6 @@
+openai
+resend
+requests
+beautifulsoup4
+python-dotenv
+playwright

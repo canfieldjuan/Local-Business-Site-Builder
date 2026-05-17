@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{SITE_NAME}} | {{SITE_TAGLINE}}</title>
+
+<!--
+  BASE REDESIGN TEMPLATE v2
+  ===========================
+  This template is color-agnostic. The :root block below contains
+  PLACEHOLDER values -- replace them entirely with brand-derived
+  colors from the analysis JSON before generating.
+
+  INJECTION TOKENS: search {{TOKEN}} to find all content replacement points.
+
+  SECTIONS: each section is marked DELETE-IF-NOT-NEEDED.
+  Remove entire marked blocks for sites that don't have that content type.
+
+  THEME SWAP: update the Google Fonts import and the four --font-* variables
+  to match the selected theme from the generation prompt.
+-->
+
+<!-- REPLACE: swap this import URL for the chosen theme's font stack -->
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+
+<style>
+
+/* ================================================================
+   DESIGN TOKENS
+   Replace ALL values in this block. No hex should appear below it.
+   ================================================================ */
+:root {
+  /* --- Brand colors (injected by LLM) --- */
+  --accent:        #REPLACE;   /* brand primary -- buttons, badges, active states */
+  --accent-dark:   #REPLACE;   /* darkened accent for hover states */
+  --secondary:     #REPLACE;   /* brand secondary -- category badges, highlights */
+
+  /* --- Review-star color (theme-independent gold) --- */
+  --star-color:    #FBBC04;
+
+  /* --- Fallback scales (will be overridden by .theme-light or .theme-dark) --- */
+  --bg:            #ffffff;
+  --bg-card:       #f8f9fa;
+  --bg-card2:      #f1f3f5;
+  --border:        #e9ecef;
+  --border-mid:    #dee2e6;
+  --border-hi:     #ced4da;
+  --text:          #212529;
+  --text-mid:      #495057;
+  --text-muted:    #6c757d;
+}
+
+/* ================================================================
+   SEMANTIC THEMES (Force accessible color math)
+   ================================================================ */
+body.theme-light {
+  --bg:            #ffffff;
+  --bg-card:       #f8f9fa;
+  --bg-card2:      #f1f3f5;
+  --border:        #e9ecef;
+  --border-mid:    #dee2e6;
+  --border-hi:     #ced4da;
+  --text:          #111827;
+  --text-mid:      #374151;
+  --text-muted:    #6b7280;
+  --star-empty:    rgba(0, 0, 0, 0.18);
+}
+
+body.theme-dark {
+  --bg:            #0f172a;
+  --bg-card:       #1e293b;
+  --bg-card2:      #334155;
+  --border:        #334155;
+  --border-mid:    #475569;
+  --border-hi:     #64748b;
+  --text:          #f8fafc;
+  --text-mid:      #cbd5e1;
+  --text-muted:    #94a3b8;
+  --star-empty:    rgba(255, 255, 255, 0.25);
+}
+
+  /* --- Typography (replace with chosen theme's font stack) --- */
+  --font-display:  'Barlow Condensed', sans-serif;
+  --font-body:     'Barlow', sans-serif;
+  --font-serif:    'Playfair Display', Georgia, serif;
+
+  /* --- Layout --- */
+  --nav-height:    64px;
+  --sidebar-width: 360px;
+  --max-width:     1280px;
+  --page-pad:      2rem;
+  --card-radius:   2px;        /* 0px = sharp, 4-6px = soft, 8px = rounded */
+  --border-width:  1px;
+
+  /* --- Conversion --- */
+  /* These are layout tokens, not colors */
+  --trust-strip-height: 54px;
+}
+
+/* ================================================================
+   RESET
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+
+/* ================================================================
+   UTILITIES
+   ================================================================ */
+.page-wrap    { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--page-pad); }
+.section-gap  { margin-top: 3rem; }
+
+/* ================================================================
+   TICKER
+   DELETE-IF-NOT-NEEDED: only include for news/radio/alert sites
+   ================================================================ */
+.ticker {
+  background: var(--accent);
+  height: 32px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.ticker-label {
+  background: var(--accent-dark);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 0 16px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.2);
+}
+.ticker-scroll { overflow: hidden; flex: 1; }
+.ticker-track  { display: inline-flex; animation: tick 50s linear infinite; white-space: nowrap; }
+.ticker-item {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.92);
+  padding: 0 2.5rem;
+}
+.ticker-item::after { content: '//'; margin-left: 2.5rem; opacity: 0.35; }
+@keyframes tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* ================================================================
+   TRUST STRIP
+   Sits directly below the nav (or below the ticker if present).
+   Always visible above the fold. Keep compact -- 44-52px.
+   ================================================================ */
+.trust-strip {
+  background: var(--bg-card);
+  border-bottom: var(--border-width) solid var(--border);
+  height: var(--trust-strip-height);
+  display: flex;
+  align-items: center;
+}
+.trust-strip-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.trust-item + .trust-item {
+  padding-left: 2rem;
+  border-left: var(--border-width) solid var(--border-mid);
+}
+/* Star widgets render via a CSS overlay so a non-integer score (e.g. 4.4)
+   shows partial fill. Set `style="--score: <google_review_score>"` on the
+   element. The HTML content must be exactly 5 star glyphs: ★★★★★.
+   When --score is omitted, the overlay defaults to 100% (5/5). */
+.trust-stars,
+.cta-trust-stars {
+  position: relative;
+  display: inline-block;
+  font-size: 14px;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--star-empty, rgba(0, 0, 0, 0.18));
+  font-family: Georgia, "Times New Roman", serif;
+}
+.trust-stars::before,
+.cta-trust-stars::before {
+  content: '\2605\2605\2605\2605\2605';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--score, 5) / 5 * 100%);
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--star-color);
+  letter-spacing: inherit;
+  pointer-events: none;
+}
+.trust-text {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.trust-text strong {
+  color: var(--text);
+  font-weight: 800;
+}
+.trust-badge {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--bg-card2);
+  border: var(--border-width) solid var(--border-mid);
+  padding: 4px 10px;
+  border-radius: var(--card-radius);
+  white-space: nowrap;
+}
+
+/* ================================================================
+   COVERAGE BAND (slim utility strip, sits between hero and services)
+   For local-service prospects with a clearly defined coverage area.
+   Single line: "Not sure if we cover your area?  Call <phone> ->"
+   ================================================================ */
+.coverage-band {
+  background: var(--bg-card);
+  border-bottom: var(--border-width) solid var(--border);
+  padding: 1.1rem 0;
+}
+.coverage-band-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+.coverage-band-text {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-mid);
+}
+.coverage-band-cta {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.coverage-band-cta:hover { opacity: 0.75; }
+
+/* ================================================================
+   REVIEWS AGGREGATE (centered review-score block)
+   Sits in its own section. Use when prospect has a third-party
+   review score but no individual review-text quotes. The proportional
+   star overlay uses --score the same way .trust-stars does.
+   ================================================================ */
+.reviews-aggregate {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.reviews-stars-lg {
+  position: relative;
+  display: inline-block;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--star-empty, rgba(0, 0, 0, 0.18));
+  font-size: 38px;
+  letter-spacing: 6px;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
+.reviews-stars-lg::before {
+  content: '\2605\2605\2605\2605\2605';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--score, 5) / 5 * 100%);
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--star-color);
+  letter-spacing: inherit;
+  pointer-events: none;
+}
+.reviews-score {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.reviews-score .of-five {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+}
+.reviews-count {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+.reviews-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 3px;
+  transition: opacity 0.15s;
+}
+.reviews-cta:hover { opacity: 0.7; }
+
+/* ================================================================
+   REVIEW CARDS (3-column grid below the aggregate widget)
+   Used when prospect.reviews has 3+ entries with verbatim quote text.
+   ================================================================ */
+.reviews-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+  margin-bottom: 2rem;
+}
+.review-card {
+  background: var(--bg-card);
+  padding: 1.85rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.review-stars-sm {
+  position: relative;
+  display: inline-block;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--star-empty, rgba(0, 0, 0, 0.18));
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+.review-stars-sm::before {
+  content: '\2605\2605\2605\2605\2605';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--score, 5) / 5 * 100%);
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--star-color);
+  letter-spacing: inherit;
+  pointer-events: none;
+}
+.review-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text);
+  flex: 1;
+}
+.review-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.6rem;
+  border-top: var(--border-width) solid var(--border);
+}
+.review-author {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.review-author .review-date {
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 0.5rem;
+}
+.review-platform {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ================================================================
+   REVIEWS SUMMARY ROW (inline, bottom-left, below the card grid)
+   Compact attribution: stars + score + count + Google link.
+   ================================================================ */
+.reviews-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+.reviews-summary-stars {
+  position: relative;
+  display: inline-block;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--star-empty, rgba(0, 0, 0, 0.18));
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+.reviews-summary-stars::before {
+  content: '\2605\2605\2605\2605\2605';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--score, 5) / 5 * 100%);
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--star-color);
+  letter-spacing: inherit;
+  pointer-events: none;
+}
+.reviews-summary-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.reviews-summary-text strong {
+  font-weight: 800;
+  color: var(--text);
+}
+.reviews-summary-cta {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 2px;
+  transition: opacity 0.15s;
+}
+.reviews-summary-cta:hover { opacity: 0.7; }
+
+/* ================================================================
+   DUAL CTA HERO
+   Replaces the standard hero-strip for service/business sites.
+   DELETE-IF-NOT-NEEDED for radio/news sites (use hero-strip instead).
+   urgency_type = "emergency" or "both": show .cta-emergency
+   urgency_type = "planned": only show .cta-planned, full width
+   ================================================================ */
+.dual-cta-hero {
+  background: var(--bg-card);
+  border-bottom: var(--border-width) solid var(--border);
+  padding: 3.5rem 0 3rem;
+}
+
+/* Full-bleed hero override -- use when a hero image is available.
+   Apply class="dual-cta-hero hero-fullbleed" and add style="background-image:url(...)"
+   directly on the element. Text must be light (#fff) when this class is active. */
+.hero-fullbleed {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  padding: 5rem 0 4rem;
+  border-bottom: none;
+}
+.hero-fullbleed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 100%);
+  z-index: 0;
+}
+.hero-fullbleed .dual-cta-hero-inner {
+  position: relative;
+  z-index: 1;
+}
+.hero-fullbleed .dual-cta-headline,
+.hero-fullbleed .dual-cta-sub {
+  color: #fff;
+}
+/* Scale up the headline in fullbleed mode -- but not so large that a
+   short 4-6 word headline dominates the entire viewport. Caps at 64px. */
+.hero-fullbleed .dual-cta-headline {
+  font-size: clamp(36px, 5.5vw, 64px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.4);
+}
+.hero-fullbleed .dual-cta-sub {
+  font-size: clamp(16px, 1.6vw, 20px);
+  max-width: 640px;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  opacity: 0.92;
+}
+/* In fullbleed mode the headline already sits over a dark photo with white
+   text -- a colored em would over-emphasize the accent. Use a soft white
+   instead so the em provides typographic emphasis without color noise. */
+.hero-fullbleed .dual-cta-headline em {
+  color: rgba(255, 255, 255, 0.85);
+  font-style: normal;
+}
+.hero-fullbleed .cta-trust-line {
+  margin-top: 1.75rem;
+  gap: 10px;
+}
+.hero-fullbleed .cta-trust-stars {
+  font-size: 16px;
+}
+.hero-fullbleed .cta-trust-text {
+  color: rgba(255,255,255,0.92);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.hero-fullbleed .cta-trust-text strong {
+  color: #fff;
+  font-weight: 800;
+}
+.dual-cta-hero-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+}
+.dual-cta-headline {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.dual-cta-headline em {
+  font-style: normal;
+  color: var(--accent);
+}
+.dual-cta-sub {
+  font-size: 16px;
+  color: var(--text-mid);
+  margin-bottom: 2rem;
+  max-width: 560px;
+  line-height: 1.5;
+}
+.dual-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Emergency call button */
+.cta-emergency {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: var(--card-radius);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.cta-emergency:hover { background: var(--accent-dark); color: #fff; }
+.cta-emergency-label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+.cta-emergency-badge {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}
+.cta-emergency-number {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* Planned CTA button (form / booking) */
+.cta-planned {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card2);
+  border: var(--border-width) solid var(--border-hi);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 24px;
+  border-radius: var(--card-radius);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.cta-planned:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* CTA separator */
+.cta-or {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Inline trust signal below CTAs */
+.cta-trust-line {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Default cta-trust-stars size; color comes from the shared rule above. */
+.cta-trust-stars { font-size: 14px; }
+.cta-trust-text {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.cta-trust-text strong { color: var(--text); font-weight: 800; }
+
+
+
+/* ================================================================
+   NAV
+   ================================================================ */
+.site-nav {
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: var(--border-width) solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--nav-height);
+  transition: background-color 0.3s ease;
+}
+.nav-wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.nav-brand     { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.nav-logo      { height: 42px; width: auto; }
+
+.nav-name-wrap { display: flex; flex-direction: column; line-height: 1; }
+.nav-name {
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.nav-sub {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.nav-rule  { width: 1px; height: 24px; background: var(--border-mid); flex-shrink: 0; }
+.nav-links { display: flex; list-style: none; flex: 1; }
+.nav-links a {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 0.85rem;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.nav-links a:hover  { color: var(--text); border-bottom-color: var(--border-hi); }
+.nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: var(--card-radius);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.nav-cta:hover { background: var(--accent-dark); color: #fff; }
+
+/* Phone CTA -- use instead of or alongside .nav-cta for emergency sites */
+.nav-phone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.nav-phone-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  line-height: 1;
+}
+.nav-phone-number {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.nav-phone:hover .nav-phone-number { color: var(--accent); }
+.pulse-dot {
+  width: 7px; height: 7px;
+  background: #fff; border-radius: 50%;
+  animation: pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.65)} }
+
+/* ================================================================
+   HERO / PROMO STRIP
+   DELETE-IF-NOT-NEEDED: skip if no featured promos or contests
+   ================================================================ */
+.hero-strip { background: var(--bg-card); border-bottom: var(--border-width) solid var(--border); }
+.hero-wrap  { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--page-pad); }
+.hero-label {
+  padding: 1.5rem 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hero-label-text {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.hero-label::after { content: ''; flex: 1; height: 1px; background: var(--border-mid); }
+
+/* Image promo cards -- use when images available */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* adjust columns to match image count */
+  gap: 3px;
+  padding-bottom: 3px;
+}
+.promo-img-card {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  display: block;
+  background: var(--bg-card2);
+}
+.promo-img-card img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease, filter 0.3s ease;
+  filter: brightness(0.85);
+}
+.promo-img-card:hover img { transform: scale(1.04); filter: brightness(0.65); }
+.promo-img-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 55%, transparent 100%);
+  pointer-events: none;
+}
+.promo-img-body { position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem 1.1rem; }
+.promo-tag {
+  font-family: var(--font-display);
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(0,0,0,0.55);
+  display: inline-block;
+  padding: 2px 6px; border-radius: 1px; margin-bottom: 5px;
+}
+.promo-title {
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 700;
+  color: #fff; line-height: 1.2;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+
+/* Text promo cards -- use when no images available */
+.promo-text-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  padding-bottom: 1.5rem;
+}
+.promo-text-card {
+  background: var(--bg-card2);
+  border-left: 3px solid var(--accent);
+  padding: 1.25rem;
+  display: block;
+  transition: background 0.15s;
+}
+.promo-text-card:hover   { background: var(--bg); }
+.promo-text-tag          { font-family: var(--font-display); font-size: 9px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--secondary); margin-bottom: 6px; }
+.promo-text-title        { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.2; }
+
+/* ================================================================
+   MAIN LAYOUT
+   ================================================================ */
+.layout {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2.5rem var(--page-pad) 4rem;
+  display: grid;
+  grid-template-columns: 1fr var(--sidebar-width);
+}
+.primary  { padding-right: 3rem; border-right: var(--border-width) solid var(--border); }
+.sidebar  { padding-left: 2.5rem; }
+
+/* ================================================================
+   SECTION HEADER (reused in primary and sidebar)
+   ================================================================ */
+.sec-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.7rem;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.sec-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.sec-dot   { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+.sec-all {
+  font-family: var(--font-display);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+  border: var(--border-width) solid var(--border-mid);
+  padding: 4px 12px; border-radius: var(--card-radius);
+  transition: all 0.15s;
+}
+.sec-all:hover { color: var(--text); border-color: var(--border-hi); background: var(--bg-card); }
+
+/* ================================================================
+   CONTENT BLOCK (news, sports, services, menu categories, etc.)
+   ================================================================ */
+.content-block  { background: var(--border-mid); }
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.c-card {
+  background: var(--bg-card);
+  padding: 1.5rem 1.6rem;
+  display: block;
+  border-radius: var(--card-radius);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.c-card:hover { 
+  background: var(--bg-card2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+}
+.c-card.full-row  { grid-column: 1 / -1; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 9.5px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  background: var(--accent); color: #fff;
+  padding: 2px 8px; border-radius: 1px; margin-bottom: 0.65rem;
+}
+/* Alternate badge colors for variety within a section */
+.badge.alt1 { background: var(--secondary); }
+.badge.alt2 { background: var(--text-muted); }
+
+.hl-lg {
+  font-family: var(--font-serif);
+  font-size: 21px; font-weight: 700;
+  line-height: 1.3; color: var(--text); margin-bottom: 0.5rem;
+}
+.hl {
+  font-family: var(--font-serif);
+  font-size: 15px; line-height: 1.4;
+  color: var(--text); margin-bottom: 0.4rem;
+}
+.meta-line {
+  font-family: var(--font-display);
+  font-size: 11px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+
+/* Ranked list below the featured grid */
+.content-list { background: var(--bg-card); }
+.list-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  padding: 0.9rem 1.6rem;
+  border-bottom: var(--border-width) solid var(--border);
+  transition: background 0.15s;
+}
+.list-row:hover       { background: var(--bg-card2); }
+.list-row:last-child  { border-bottom: none; }
+.list-n  { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--border-hi); line-height: 1.1; padding-top: 2px; }
+.list-hl { font-family: var(--font-serif); font-size: 14px; line-height: 1.45; color: var(--text-mid); padding-top: 3px; }
+.list-sub { font-family: var(--font-display); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+
+/* ================================================================
+   SIDEBAR: PRIMARY ACTION BLOCK
+
+   OPTION A -- Radio / stream (keep .stream-block, delete .cta-block)
+   OPTION B -- Generic CTA (keep .cta-block, delete .stream-block)
+   DELETE whichever doesn't apply
+   ================================================================ */
+
+/* OPTION A: Stream block */
+.stream-block {
+  background: var(--bg-card);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  margin-bottom: 2.75rem;
+}
+.stream-top {
+  background: var(--accent);
+  padding: 0.85rem 1.25rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.stream-live  { display: flex; align-items: center; gap: 7px; }
+.stream-dot   { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+.stream-live span { font-family: var(--font-display); font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #fff; }
+.stream-callsign  { font-family: var(--font-display); font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); letter-spacing: 0.06em; }
+.stream-body  { padding: 1.25rem; }
+.stream-name  { font-family: var(--font-display); font-size: 34px; font-weight: 900; color: var(--text); line-height: 1; }
+.stream-sub   { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+.stream-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  background: var(--bg-card2);
+  border: var(--border-width) solid var(--border-mid);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 11px; border-radius: var(--card-radius);
+  margin-top: 1.1rem;
+  transition: all 0.15s;
+}
+.stream-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.play-tri { width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 9px; border-color: transparent transparent transparent currentColor; flex-shrink: 0; }
+
+/* OPTION B: Generic CTA block */
+.cta-block {
+  background: var(--accent);
+  border-radius: var(--card-radius);
+  padding: 1.5rem;
+  margin-bottom: 2.75rem;
+  text-align: center;
+}
+.cta-block-name { font-family: var(--font-display); font-size: 24px; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 6px; }
+.cta-block-desc { font-size: 13px; color: rgba(255,255,255,0.75); margin-bottom: 1rem; }
+.cta-block-btn {
+  display: inline-block;
+  background: #fff;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 20px; border-radius: var(--card-radius);
+  transition: opacity 0.15s;
+}
+.cta-block-btn:hover { opacity: 0.88; color: var(--accent); }
+
+/* ================================================================
+   SIDEBAR: SHARED BLOCK STRUCTURE
+   ================================================================ */
+.sb-block { margin-bottom: 2.75rem; }
+.sb-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem; padding-bottom: 0.6rem;
+  border-bottom: var(--border-width) solid var(--border);
+}
+.sb-title { font-family: var(--font-display); font-size: 10.5px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 7px; }
+.sb-dot   { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+.sb-all   { font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); transition: color 0.15s; }
+.sb-all:hover { color: var(--text); }
+
+/* ================================================================
+   SIDEBAR: CALENDAR
+   DELETE-IF-NOT-NEEDED
+   ================================================================ */
+.cal-row {
+  display: grid; grid-template-columns: 44px 1fr; gap: 12px;
+  padding: 0.8rem 0; border-bottom: var(--border-width) solid var(--border);
+  cursor: pointer; transition: opacity 0.15s; align-items: start;
+}
+.cal-row:hover       { opacity: 0.7; }
+.cal-row:last-child  { border-bottom: none; }
+.cal-date { background: var(--bg-card2); border: var(--border-width) solid var(--border-mid); border-radius: var(--card-radius); text-align: center; padding: 5px 3px 4px; }
+.cal-d    { font-family: var(--font-display); font-size: 20px; font-weight: 900; color: var(--text); line-height: 1; }
+.cal-m    { font-family: var(--font-display); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.cal-name { font-size: 13px; color: var(--text); line-height: 1.4; }
+.cal-cancel { font-family: var(--font-display); font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 2px; }
+
+/* ================================================================
+   SIDEBAR: QUICK LINKS
+   ================================================================ */
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.quick-card {
+  background: var(--bg-card); border: var(--border-width) solid var(--border);
+  border-radius: var(--card-radius); padding: 0.9rem 1rem;
+  display: block; transition: all 0.15s;
+}
+.quick-card:hover { background: var(--bg-card2); border-color: var(--border-mid); }
+.quick-cat   { font-family: var(--font-display); font-size: 9px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.quick-label { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); }
+
+/* ================================================================
+   SIDEBAR: SOCIAL LINKS
+   DELETE-IF-NOT-NEEDED
+   ================================================================ */
+.social-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.social-card {
+  background: var(--bg-card); border: var(--border-width) solid var(--border);
+  border-radius: var(--card-radius); padding: 0.9rem 0.75rem;
+  text-align: center; display: block; transition: all 0.15s;
+}
+.social-card:hover { background: var(--bg-card2); border-color: var(--border-mid); }
+.social-lbl { font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mid); }
+.social-card:hover .social-lbl { color: var(--text); }
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+.site-footer { border-top: var(--border-width) solid var(--border); background: var(--bg-card); }
+.footer-grid {
+  max-width: var(--max-width); margin: 0 auto;
+  padding: 3rem var(--page-pad) 2rem;
+  display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 3rem;
+}
+.ft-brand-name { font-family: var(--font-display); font-size: 26px; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -0.01em; margin-bottom: 4px; }
+.ft-tagline    { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.75rem; }
+.ft-phone-label { display: block; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.ft-phone      { display: inline-block; font-family: var(--font-display); font-size: 22px; font-weight: 900; color: var(--text); line-height: 1.1; letter-spacing: 0.01em; transition: color 0.15s; }
+.ft-phone:hover { color: var(--accent); }
+.ft-address    { font-size: 14px; color: var(--text-muted); line-height: 1.65; margin-top: 1.5rem; }
+.ft-contact    { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+.ft-contact a  { color: var(--text-muted); transition: color 0.15s; }
+.ft-contact a:hover { color: var(--text); }
+.ft-col-title  { font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.1rem; padding-bottom: 0.6rem; border-bottom: var(--border-width) solid var(--border); }
+.ft-links      { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.ft-links a    { font-size: 13px; color: var(--text-muted); transition: color 0.15s; }
+.ft-links a:hover { color: var(--text); }
+.footer-bottom {
+  max-width: var(--max-width); margin: 0 auto;
+  padding: 1.25rem var(--page-pad);
+  border-top: var(--border-width) solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-bottom p { font-size: 12px; color: var(--text-muted); }
+.ft-aux-link { font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); border: var(--border-width) solid var(--border-mid); padding: 5px 12px; border-radius: var(--card-radius); transition: all 0.15s; }
+.ft-aux-link:hover { color: var(--text); border-color: var(--border-hi); }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 768px) {
+  :root { --page-pad: 1rem; }
+  .nav-links     { display: none; }
+  .nav-phone     { display: none; } /* phone visible in dual-cta-hero on mobile */
+  .trust-strip-inner { gap: 1rem; overflow-x: auto; }
+  .trust-item + .trust-item { padding-left: 1rem; }
+  .dual-cta-hero { padding: 2.5rem 0 2rem; }
+  .dual-cta-row  { flex-direction: column; align-items: flex-start; }
+  .cta-emergency, .cta-planned { width: 100%; justify-content: center; }
+  .cta-or        { display: none; }
+  .layout        { grid-template-columns: 1fr; padding: 1.5rem var(--page-pad) 3rem; }
+  .primary       { padding-right: 0; border-right: none; padding-bottom: 2rem; border-bottom: var(--border-width) solid var(--border); }
+  .sidebar       { padding-left: 0; margin-top: 2rem; }
+  .promo-grid    { grid-template-columns: 1fr 1fr; }
+  .content-grid  { grid-template-columns: 1fr; }
+  .c-card.full-row { grid-column: 1; }
+  .footer-grid   { grid-template-columns: 1fr; gap: 2rem; }
+  .quick-grid    { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ================================================================
+   INTERIOR PAGE LAYOUTS
+   These components are used by interior pages (contact, about,
+   services, single-service, etc.) -- not the homepage.
+   All interior pages reuse: nav, trust-strip, footer from above.
+   ================================================================ */
+
+/* --- Shared interior page hero (simpler than homepage) --- */
+.page-hero {
+  padding: 3rem 0 2.5rem;
+  border-bottom: var(--border-width) solid var(--border);
+  background: var(--bg-card);
+}
+.page-hero-inner { max-width: var(--max-width); margin: 0 auto; padding: 0 var(--page-pad); }
+.page-hero-eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+.page-hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.5vw, 40px);
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+.page-hero-sub {
+  font-size: 15px;
+  color: var(--text-mid);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+/* --- Interior page body wrapper --- */
+.page-body {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3rem var(--page-pad) 4rem;
+}
+.page-section { margin-bottom: 3.5rem; }
+.page-section:last-child { margin-bottom: 0; }
+.page-section-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.6rem;
+  border-bottom: var(--border-width) solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.page-section-title .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
+
+/* ================================================================
+   CONTACT PAGE
+   ================================================================ */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+/* Contact form */
+.contact-form-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+.contact-form-headline {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+}
+.form-group { margin-bottom: 1.1rem; }
+.form-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  background: var(--bg-card);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
+  outline: none;
+}
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 120px; }
+.form-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 24px;
+  border-radius: var(--card-radius);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 0.5rem;
+}
+.form-submit:hover { background: var(--accent-dark); }
+.form-trust {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0.75rem;
+}
+.form-trust-stars { color: var(--secondary); font-size: 11px; }
+.form-trust-text { font-family: var(--font-display); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); }
+.form-trust-text strong { color: var(--text); }
+
+/* Contact details panel */
+.contact-details-block {
+  background: var(--bg-card);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.contact-details-top {
+  background: var(--bg-card2);
+  border-bottom: var(--border-width) solid var(--border-mid);
+  padding: 0.75rem 1.25rem;
+}
+.contact-details-top-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+/* Phone link uses accent as text color, not block background */
+.contact-phone-link {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  display: block;
+  transition: opacity 0.15s;
+}
+.contact-phone-link:hover { opacity: 0.85; color: var(--accent); }
+.contact-details-body { padding: 1.25rem; }
+.contact-row {
+  display: flex;
+  gap: 10px;
+  padding: 0.6rem 0;
+  border-bottom: var(--border-width) solid var(--border);
+  align-items: flex-start;
+}
+.contact-row:last-child { border-bottom: none; }
+.contact-row-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  width: 60px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.contact-row-value { font-size: 13px; color: var(--text); line-height: 1.5; }
+.contact-row-value a { color: var(--accent); transition: opacity 0.15s; }
+.contact-row-value a:hover { opacity: 0.8; }
+
+/* Hours table */
+.hours-table { width: 100%; border-collapse: collapse; }
+.hours-table tr { border-bottom: var(--border-width) solid var(--border); }
+.hours-table tr:last-child { border-bottom: none; }
+.hours-table td { padding: 5px 0; font-size: 12.5px; }
+.hours-table td:first-child { color: var(--text-muted); font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; width: 100px; }
+.hours-table td:last-child { color: var(--text); text-align: right; }
+
+/* Map embed placeholder */
+.map-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: var(--bg-card2);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 1rem;
+}
+.map-placeholder-text {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.map-placeholder a {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 0.15s;
+}
+.map-placeholder a:hover { opacity: 0.8; }
+
+@media (max-width: 768px) {
+  .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+}
+
+/* ================================================================
+   ABOUT PAGE
+   ================================================================ */
+
+/* Stat callouts */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--border);
+  margin: 2rem 0;
+}
+.stat-card {
+  background: var(--bg-card);
+  padding: 1.5rem;
+  text-align: center;
+}
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Team grid */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+}
+.team-card {
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: background 0.15s;
+}
+.team-card:hover { background: var(--bg-card2); }
+.team-photo {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  background: var(--bg-card2);
+}
+.team-photo-placeholder {
+  width: 100%;
+  aspect-ratio: 3/4;
+  background: var(--bg-card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.team-photo-initials {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--border-hi);
+}
+.team-info { padding: 1.1rem 1.25rem; }
+.team-name { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--text); }
+.team-title { font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-top: 2px; }
+.team-bio { font-size: 13px; color: var(--text-mid); margin-top: 0.6rem; line-height: 1.5; }
+
+/* Values grid */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--border);
+}
+.value-card {
+  background: var(--bg-card);
+  padding: 1.4rem 1.25rem;
+}
+.value-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-card2);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+.value-icon-glyph { font-size: 18px; line-height: 1; }
+.value-label { font-family: var(--font-display); font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.value-desc { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+
+@media (max-width: 768px) {
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+  .team-grid { grid-template-columns: 1fr 1fr; }
+  .values-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ================================================================
+   SERVICES PAGE
+   ================================================================ */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+}
+.service-card {
+  background: var(--bg-card);
+  padding: 1.85rem 1.85rem;
+  display: block;
+  transition: background 0.15s;
+}
+.service-card:hover { background: var(--bg-card2); }
+.service-card.featured { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+.service-card-badge { font-family: var(--font-display); font-size: 9px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; background: var(--accent); color: #fff; display: inline-block; padding: 2px 8px; border-radius: 1px; margin-bottom: 0.75rem; }
+.service-card-name { font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 0.6rem; }
+.service-card.featured .service-card-name { font-size: 28px; }
+.service-card-desc { font-size: 14.5px; color: var(--text-mid); line-height: 1.65; margin-bottom: 0.75rem; }
+.service-card-link { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); transition: opacity 0.15s; }
+.service-card-link:hover { opacity: 0.8; }
+
+@media (max-width: 768px) {
+  .services-grid { grid-template-columns: 1fr; }
+  .service-card.featured { grid-template-columns: 1fr; }
+}
+
+/* ================================================================
+   SINGLE SERVICE PAGE
+   ================================================================ */
+
+/* Process steps */
+.process-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+.process-step {
+  background: var(--bg-card);
+  padding: 1.5rem 1.6rem;
+  position: relative;
+}
+.process-num {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--border-hi);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.process-title { font-family: var(--font-display); font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.process-desc { font-size: 13px; color: var(--text-mid); line-height: 1.5; }
+
+/* Benefits grid */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  background: var(--border);
+}
+.benefit-card {
+  background: var(--bg-card);
+  padding: 1.75rem 1.85rem;
+  display: flex;
+  gap: 1.1rem;
+  align-items: flex-start;
+}
+.benefit-dot {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.benefit-title { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.benefit-desc { font-size: 14.5px; color: var(--text-mid); line-height: 1.65; }
+
+/* FAQ */
+.faq-list { display: flex; flex-direction: column; gap: 0; }
+.faq-item {
+  border-bottom: var(--border-width) solid var(--border);
+  padding: 1.1rem 0;
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-q {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+.faq-a { font-size: 14px; color: var(--text-mid); line-height: 1.6; }
+
+/* Related services */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: var(--border);
+}
+.related-card {
+  background: var(--bg-card);
+  padding: 1.25rem 1.4rem;
+  display: block;
+  transition: background 0.15s;
+}
+.related-card:hover { background: var(--bg-card2); }
+.related-label { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.related-name { font-family: var(--font-serif); font-size: 15px; color: var(--text); line-height: 1.3; }
+
+/* Inline CTA block (used at bottom of any interior page) */
+.page-cta-block {
+  background: var(--bg-card);
+  border: var(--border-width) solid var(--border-mid);
+  border-radius: var(--card-radius);
+  padding: 2.5rem;
+  text-align: center;
+  margin-top: 3.5rem;
+}
+.page-cta-headline {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.page-cta-sub { font-size: 14px; color: var(--text-mid); margin-bottom: 1.5rem; }
+.page-cta-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.page-cta-trust { margin-top: 1rem; font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); }
+.page-cta-trust strong { color: var(--text); }
+
+@media (max-width: 768px) {
+  .process-steps { grid-template-columns: 1fr; }
+  .benefits-grid { grid-template-columns: 1fr; }
+  .reviews-card-grid { grid-template-columns: 1fr; }
+  .related-grid  { grid-template-columns: 1fr 1fr; }
+  .page-cta-row  { flex-direction: column; }
+  .page-hero     { padding: 2rem 0 1.5rem; }
+  .page-body     { padding: 2rem var(--page-pad) 3rem; }
+}
+
+
+
+/* ================================================================
+   MODERN REVEAL ANIMATIONS
+   ================================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+</style>
+
+<!-- SCROLL REVEAL SCRIPT -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+    document.querySelectorAll('.c-card, .promo-img-card, .promo-text-card, .stream-block, .page-section').forEach((el) => {
+      el.classList.add('reveal');
+      observer.observe(el);
+    });
+  });
+</script>
+</head>
+<body>
+
+<!-- ================================================================
+     TICKER -- DELETE-IF-NOT-NEEDED
+     Duplicate all ticker-item spans a second time for seamless loop
+     ================================================================ -->
+<div class="ticker" role="marquee" aria-label="Breaking news ticker">
+  <span class="ticker-label">{{TICKER_LABEL}}</span>
+  <div class="ticker-scroll">
+    <div class="ticker-track">
+      <span class="ticker-item">{{HEADLINE_1}}</span>
+      <span class="ticker-item">{{HEADLINE_2}}</span>
+      <span class="ticker-item">{{HEADLINE_3}}</span>
+      <span class="ticker-item">{{HEADLINE_4}}</span>
+      <!-- DUPLICATE FOR SEAMLESS LOOP -->
+      <span class="ticker-item">{{HEADLINE_1}}</span>
+      <span class="ticker-item">{{HEADLINE_2}}</span>
+      <span class="ticker-item">{{HEADLINE_3}}</span>
+      <span class="ticker-item">{{HEADLINE_4}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     NAV
+     ================================================================ -->
+<nav class="site-nav">
+  <div class="nav-wrap">
+    <a href="/" class="nav-brand">
+      <img class="nav-logo" src="{{LOGO_URL}}" alt="{{SITE_NAME}}"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="nav-name-wrap" style="display:none;">
+        <span class="nav-name">{{SITE_NAME}}</span>
+        <span class="nav-sub">{{SITE_TAGLINE}}</span>
+      </div>
+    </a>
+    <div class="nav-rule"></div>
+    <ul class="nav-links">
+      <li><a href="{{NAV_URL_1}}">{{NAV_LABEL_1}}</a></li>
+      <li><a href="{{NAV_URL_2}}">{{NAV_LABEL_2}}</a></li>
+      <li><a href="{{NAV_URL_3}}">{{NAV_LABEL_3}}</a></li>
+      <!-- repeat as needed -->
+    </ul>
+
+    <!--
+      EMERGENCY / BOTH urgency_type: show nav-phone + nav-cta
+      PLANNED urgency_type: show nav-cta only, delete nav-phone block
+    -->
+    <a href="tel:{{PHONE}}" class="nav-phone">
+      <div>
+        <div class="nav-phone-label">Call Now 24/7</div><!-- edit or delete label -->
+        <div class="nav-phone-number">{{PHONE}}</div>
+      </div>
+    </a>
+
+    <a href="{{CTA_URL}}" class="nav-cta" target="_blank" rel="noopener">
+      <!-- include pulse-dot only for live stream CTAs -->
+      <span class="pulse-dot"></span>
+      {{CTA_LABEL}}
+    </a>
+  </div>
+</nav>
+
+<!-- ================================================================
+     TRUST STRIP
+     Always present. Populate from conversion_profile.trust_signals.
+     ================================================================ -->
+<div class="trust-strip">
+  <div class="trust-strip-inner">
+    <!-- Review summary: only include if review_summary is populated -->
+    <div class="trust-item">
+      <span class="trust-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <span class="trust-text"><strong>{{REVIEW_SCORE}}</strong> &mdash; {{REVIEW_COUNT}} {{REVIEW_PLATFORM}} Reviews</span>
+    </div>
+    <!-- Certification badges: repeat trust-item for each cert -->
+    <div class="trust-item">
+      <span class="trust-badge">{{CERT_1}}</span>
+    </div>
+    <!-- Social proof line -->
+    <div class="trust-item">
+      <span class="trust-text">{{SOCIAL_PROOF_LINE}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     DUAL CTA HERO
+     DELETE-IF-NOT-NEEDED: for radio/news sites use hero-strip instead.
+     urgency_type = "emergency": keep cta-emergency, keep cta-planned
+     urgency_type = "planned": delete cta-emergency and cta-or, full-width cta-planned
+     urgency_type = "both": keep everything as-is
+     ================================================================ -->
+<section class="dual-cta-hero">
+  <div class="dual-cta-hero-inner">
+    <h1 class="dual-cta-headline">{{SERVICE_OR_VALUE}} <em>in {{LOCATION}}</em></h1>
+    <p class="dual-cta-sub">{{ONE_LINE_DIFFERENTIATOR}}</p>
+    <div class="dual-cta-row">
+      <!-- Emergency call CTA -- DELETE if urgency_type = "planned" -->
+      <a href="tel:{{PHONE}}" class="cta-emergency">
+        <div class="cta-emergency-label">
+          <span class="cta-emergency-badge">{{EMERGENCY_BADGE}}</span><!-- e.g. "Emergency? Call Now" or "24/7 Line" -->
+          <span class="cta-emergency-number">{{PHONE}}</span>
+        </div>
+      </a>
+      <span class="cta-or">or</span>
+      <!-- Planned / booking CTA -->
+      <a href="{{CTA_URL}}" class="cta-planned">{{PLANNED_CTA_LABEL}}</a><!-- e.g. "Get My Free Quote" -->
+    </div>
+    <!-- Inline trust signal below CTAs -->
+    <div class="cta-trust-line">
+      <span class="cta-trust-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+      <span class="cta-trust-text"><strong>{{REVIEW_SCORE}} stars</strong> &mdash; {{SOCIAL_PROOF_LINE}}</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     HERO PROMO STRIP -- DELETE-IF-NOT-NEEDED
+     ================================================================ -->
+<section class="hero-strip">
+  <div class="hero-wrap">
+    <div class="hero-label">
+      <span class="hero-label-text">{{HERO_LABEL}}</span>
+    </div>
+
+    <!-- IMAGE PROMO GRID (delete and use .promo-text-grid if no images) -->
+    <div class="promo-grid">
+      <a href="{{PROMO_URL_1}}" class="promo-img-card" target="_blank" rel="noopener">
+        <img src="{{PROMO_IMG_1}}" alt="{{PROMO_ALT_1}}"
+             onerror="this.style.display='none'">
+        <div class="promo-img-overlay"></div>
+        <div class="promo-img-body">
+          <span class="promo-tag">{{PROMO_TAG_1}}</span>
+          <div class="promo-title">{{PROMO_TITLE_1}}</div>
+        </div>
+      </a>
+      <!-- repeat promo-img-card for each promo item -->
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     MAIN LAYOUT
+     ================================================================ -->
+<div class="layout">
+
+  <main class="primary">
+
+    <!-- CONTENT BLOCK (repeat entire block for additional sections e.g. sports) -->
+    <div class="sec-hd">
+      <span class="sec-title"><span class="sec-dot"></span>{{SECTION_TITLE}}</span>
+      <a href="{{SECTION_ALL_URL}}" class="sec-all" target="_blank">All {{SECTION_TITLE}} &rarr;</a>
+    </div>
+
+    <div class="content-block">
+      <div class="content-grid">
+        <a href="{{ITEM_1_URL}}" class="c-card full-row" target="_blank" rel="noopener">
+          <span class="badge">{{ITEM_1_TAG}}</span>
+          <div class="hl-lg">{{ITEM_1_TITLE}}</div>
+          <div class="meta-line">{{ITEM_1_META}}</div>
+        </a>
+        <a href="{{ITEM_2_URL}}" class="c-card" target="_blank" rel="noopener">
+          <span class="badge alt1">{{ITEM_2_TAG}}</span>
+          <div class="hl">{{ITEM_2_TITLE}}</div>
+          <div class="meta-line">{{ITEM_2_META}}</div>
+        </a>
+        <a href="{{ITEM_3_URL}}" class="c-card" target="_blank" rel="noopener">
+          <span class="badge alt2">{{ITEM_3_TAG}}</span>
+          <div class="hl">{{ITEM_3_TITLE}}</div>
+          <div class="meta-line">{{ITEM_3_META}}</div>
+        </a>
+      </div>
+      <div class="content-list">
+        <a href="{{ITEM_4_URL}}" class="list-row" target="_blank" rel="noopener">
+          <span class="list-n">4</span>
+          <div><div class="list-hl">{{ITEM_4_TITLE}}</div><div class="list-sub">{{ITEM_4_SUB}}</div></div>
+        </a>
+        <a href="{{ITEM_5_URL}}" class="list-row" target="_blank" rel="noopener">
+          <span class="list-n">5</span>
+          <div><div class="list-hl">{{ITEM_5_TITLE}}</div><div class="list-sub">{{ITEM_5_SUB}}</div></div>
+        </a>
+        <!-- repeat list-row as needed -->
+      </div>
+    </div>
+
+    <!-- ADD SECOND SECTION with class="section-gap" on a wrapper div -->
+
+  </main>
+
+  <aside class="sidebar">
+
+    <!-- PRIMARY ACTION: pick Option A or B, delete the other -->
+
+    <!-- OPTION A: Radio stream block -->
+    <div class="stream-block">
+      <div class="stream-top">
+        <div class="stream-live">
+          <div class="stream-dot"></div>
+          <span>On Air Now</span>
+        </div>
+        <span class="stream-callsign">{{CALL_SIGN}}</span>
+      </div>
+      <div class="stream-body">
+        <div class="stream-name">{{STATION_NAME}}</div>
+        <div class="stream-sub">{{FORMAT}} &bull; {{LOCATION}}</div>
+        <a href="{{STREAM_URL}}" class="stream-btn" target="_blank" rel="noopener">
+          <span class="play-tri"></span>
+          Stream Live
+        </a>
+        <!-- Inline trust signal below CTA -- populate from conversion_profile.trust_signals -->
+        <div class="cta-trust-line" style="margin-top:0.75rem;">
+          <span class="cta-trust-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          <span class="cta-trust-text"><strong>{{REVIEW_SCORE}}</strong> &mdash; {{REVIEW_COUNT}} reviews</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION B: Generic CTA (uncomment if not a radio station)
+    <div class="cta-block">
+      <div class="cta-block-name">{{SITE_NAME}}</div>
+      <div class="cta-block-desc">{{CTA_DESCRIPTION}}</div>
+      <a href="{{CTA_URL}}" class="cta-block-btn">{{CTA_LABEL}}</a>
+    </div>
+    -->
+
+    <!-- CALENDAR -- DELETE-IF-NOT-NEEDED -->
+    <div class="sb-block">
+      <div class="sb-hd">
+        <span class="sb-title"><span class="sb-dot"></span>{{CALENDAR_TITLE}}</span>
+        <a href="{{CALENDAR_URL}}" class="sb-all" target="_blank">Full Calendar &rarr;</a>
+      </div>
+      <a href="{{EVENT_1_URL}}" class="cal-row" target="_blank" rel="noopener">
+        <div class="cal-date">
+          <div class="cal-d">{{EVENT_1_DAY}}</div>
+          <div class="cal-m">{{EVENT_1_MON}}</div>
+        </div>
+        <div>
+          <!-- remove cal-cancel span if event is not cancelled -->
+          <span class="cal-cancel">Cancelled</span>
+          <div class="cal-name">{{EVENT_1_NAME}}</div>
+        </div>
+      </a>
+      <!-- repeat cal-row for each event -->
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div class="sb-block">
+      <div class="sb-hd">
+        <span class="sb-title"><span class="sb-dot"></span>Quick Links</span>
+      </div>
+      <div class="quick-grid">
+        <a href="{{QL_URL_1}}" class="quick-card" target="_blank" rel="noopener">
+          <div class="quick-cat">{{QL_CAT_1}}</div>
+          <div class="quick-label">{{QL_LABEL_1}}</div>
+        </a>
+        <!-- repeat quick-card (6 max) -->
+      </div>
+    </div>
+
+    <!-- SOCIAL -- DELETE-IF-NOT-NEEDED -->
+    <div class="sb-block">
+      <div class="sb-hd">
+        <span class="sb-title"><span class="sb-dot"></span>Follow Us</span>
+      </div>
+      <div class="social-grid">
+        <a href="{{SOC_URL_1}}" class="social-card" target="_blank" rel="noopener">
+          <span class="social-lbl">{{SOC_PLATFORM_1}}</span>
+        </a>
+        <!-- repeat social-card -->
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ================================================================
+     FOOTER
+     ================================================================ -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div>
+      <div class="ft-brand-name">{{SITE_NAME}}</div>
+      <div class="ft-tagline">{{SITE_TAGLINE}}</div>
+      <div class="ft-contact">
+        {{ADDRESS}}<br>
+        {{HOURS}}<br>
+        Phone: {{PHONE}}<br>
+        <a href="mailto:{{EMAIL}}">{{EMAIL}}</a>
+      </div>
+    </div>
+    <div>
+      <div class="ft-col-title">Navigate</div>
+      <ul class="ft-links">
+        <li><a href="{{NAV_URL_1}}">{{NAV_LABEL_1}}</a></li>
+        <!-- repeat -->
+      </ul>
+    </div>
+    <div>
+      <div class="ft-col-title">More</div>
+      <ul class="ft-links">
+        <li><a href="{{FOOTER_URL_1}}">{{FOOTER_LABEL_1}}</a></li>
+        <!-- repeat -->
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; {{YEAR}} {{ORG_NAME}}. All rights reserved.</p>
+    <a href="{{AUX_LINK_URL}}" class="ft-aux-link" target="_blank" rel="noopener">{{AUX_LINK_LABEL}}</a>
+  </div>
+</footer>
+
+</body>
+<script>document.getElementById('footer-year') && (document.getElementById('footer-year').textContent = new Date().getFullYear());</script>
+</html>
+
+<!-- ================================================================
+     INTERIOR PAGE EXAMPLES
+     Everything below shows how to use the interior page components.
+     These are NOT part of the homepage -- copy the relevant block
+     into a new HTML file, paste the same :root + nav + footer,
+     and build the content area from these patterns.
+     ================================================================ -->
+
+<!-- ================================================================
+     CONTACT PAGE -- main content area example
+     ================================================================
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Get in Touch</div>
+    <h1 class="page-hero-headline">Contact {{SITE_NAME}}</h1>
+    <p class="page-hero-sub">{{RESPONSE_TIME_PROMISE_OR_HOURS}}</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="contact-grid">
+
+    LEFT: Form
+    <div class="contact-form-wrap">
+      <div class="contact-form-headline">{{FORM_HEADLINE}}</div>
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input class="form-input" type="text" placeholder="First and last name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <input class="form-input" type="tel" placeholder="Best number to reach you">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">How Can We Help?</label>
+        <textarea class="form-textarea" placeholder="Briefly describe what you need..."></textarea>
+      </div>
+      <button class="form-submit">{{FORM_SUBMIT_LABEL}}</button>
+      <div class="form-trust">
+        <span class="form-trust-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+        <span class="form-trust-text"><strong>{{REVIEW_SCORE}} stars</strong> &mdash; {{SOCIAL_PROOF_LINE}}</span>
+      </div>
+    </div>
+
+    RIGHT: Contact details
+    <div class="contact-details">
+      <div class="contact-details-block">
+        <div class="contact-details-top">
+          <div class="contact-details-top-label">Call Us Directly</div>
+          <a href="tel:{{PHONE}}" class="contact-phone-link">{{PHONE}}</a>
+        </div>
+        <div class="contact-details-body">
+          <div class="contact-row">
+            <span class="contact-row-label">Email</span>
+            <span class="contact-row-value"><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></span>
+          </div>
+          <div class="contact-row">
+            <span class="contact-row-label">Address</span>
+            <span class="contact-row-value">{{ADDRESS}}</span>
+          </div>
+          <div class="contact-row">
+            <span class="contact-row-label">Hours</span>
+            <span class="contact-row-value">
+              <table class="hours-table">
+                <tr><td>Mon&ndash;Fri</td><td>{{WEEKDAY_HOURS}}</td></tr>
+                <tr><td>Saturday</td><td>{{SAT_HOURS}}</td></tr>
+                <tr><td>Sunday</td><td>{{SUN_HOURS}}</td></tr>
+              </table>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="map-placeholder">
+        <span class="map-placeholder-text">{{ADDRESS}}</span>
+        <a href="https://maps.google.com/?q={{ADDRESS_URL_ENCODED}}" target="_blank" rel="noopener">Open in Google Maps &rarr;</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+     ================================================================
+     ABOUT PAGE -- main content area example
+     ================================================================
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">Our Story</div>
+    <h1 class="page-hero-headline">{{SITE_NAME}} &mdash; {{CITY}}'s {{DESCRIPTOR}}</h1>
+    <p class="page-hero-sub">{{MISSION_OR_BRAND_PROMISE}}</p>
+  </div>
+</div>
+
+<div class="page-body">
+
+  Stats strip
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-number">{{STAT_1_NUM}}</div><div class="stat-label">{{STAT_1_LABEL}}</div></div>
+    <div class="stat-card"><div class="stat-number">{{STAT_2_NUM}}</div><div class="stat-label">{{STAT_2_LABEL}}</div></div>
+    <div class="stat-card"><div class="stat-number">{{STAT_3_NUM}}</div><div class="stat-label">{{STAT_3_LABEL}}</div></div>
+    <div class="stat-card"><div class="stat-number">{{STAT_4_NUM}}</div><div class="stat-label">{{STAT_4_LABEL}}</div></div>
+  </div>
+
+  Team grid
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>Meet the Team</div>
+    <div class="team-grid">
+      <div class="team-card">
+        <img class="team-photo" src="{{TEAM_1_PHOTO}}" alt="{{TEAM_1_NAME}}"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="team-photo-placeholder" style="display:none;">
+          <span class="team-photo-initials">{{TEAM_1_INITIALS}}</span>
+        </div>
+        <div class="team-info">
+          <div class="team-name">{{TEAM_1_NAME}}</div>
+          <div class="team-title">{{TEAM_1_TITLE}}</div>
+          <div class="team-bio">{{TEAM_1_BIO}}</div>
+        </div>
+      </div>
+      repeat team-card per person
+    </div>
+  </div>
+
+  Values
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>What We Stand For</div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon"><span class="value-icon-glyph">&#10003;</span></div>
+        <div class="value-label">{{VALUE_1_LABEL}}</div>
+        <div class="value-desc">{{VALUE_1_DESC}}</div>
+      </div>
+      repeat value-card
+    </div>
+  </div>
+
+  Bottom CTA
+  <div class="page-cta-block">
+    <div class="page-cta-headline">{{CTA_HEADLINE}}</div>
+    <p class="page-cta-sub">{{CTA_SUB}}</p>
+    <div class="page-cta-row">
+      <a href="tel:{{PHONE}}" class="cta-emergency">...</a>
+      <a href="{{CTA_URL}}" class="cta-planned">{{CTA_LABEL}}</a>
+    </div>
+    <div class="page-cta-trust"><strong>{{REVIEW_SCORE}} stars</strong> &mdash; {{SOCIAL_PROOF_LINE}}</div>
+  </div>
+
+</div>
+
+     ================================================================
+     SERVICES PAGE -- main content area example
+     ================================================================
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">What We Offer</div>
+    <h1 class="page-hero-headline">Our Services</h1>
+    <p class="page-hero-sub">{{SERVICES_VALUE_STATEMENT}}</p>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="services-grid">
+    Featured service (full width)
+    <a href="{{SERVICE_1_URL}}" class="service-card featured">
+      <div>
+        <span class="service-card-badge">Featured</span>
+        <div class="service-card-name">{{SERVICE_1_NAME}}</div>
+        <p class="service-card-desc">{{SERVICE_1_DESC}}</p>
+        <span class="service-card-link">Learn More &rarr;</span>
+      </div>
+      <div> optional: image or stat callout goes here </div>
+    </a>
+    Regular service cards
+    <a href="{{SERVICE_2_URL}}" class="service-card">
+      <span class="service-card-badge">{{SERVICE_2_TAG}}</span>
+      <div class="service-card-name">{{SERVICE_2_NAME}}</div>
+      <p class="service-card-desc">{{SERVICE_2_DESC}}</p>
+      <span class="service-card-link">Learn More &rarr;</span>
+    </a>
+    repeat service-card as needed
+  </div>
+
+  Bottom CTA
+  <div class="page-cta-block">
+    <div class="page-cta-headline">Ready to Get Started?</div>
+    <p class="page-cta-sub">{{CTA_SUB}}</p>
+    <div class="page-cta-row">
+      <a href="tel:{{PHONE}}" class="cta-emergency">...</a>
+      <a href="{{CTA_URL}}" class="cta-planned">{{CTA_LABEL}}</a>
+    </div>
+  </div>
+</div>
+
+     ================================================================
+     SINGLE SERVICE PAGE -- main content area example
+     ================================================================
+
+<section class="dual-cta-hero">
+  <div class="dual-cta-hero-inner">
+    <h1 class="dual-cta-headline">{{SERVICE_NAME}} <em>in {{LOCATION}}</em></h1>
+    <p class="dual-cta-sub">{{SERVICE_DIFFERENTIATOR}}</p>
+    <div class="dual-cta-row">
+      <a href="tel:{{PHONE}}" class="cta-emergency">...</a>
+      <a href="{{CTA_URL}}" class="cta-planned">{{CTA_LABEL}}</a>
+    </div>
+    <div class="cta-trust-line">...</div>
+  </div>
+</section>
+
+<div class="page-body">
+
+  Process steps
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>How It Works</div>
+    <div class="process-steps">
+      <div class="process-step">
+        <div class="process-num">01</div>
+        <div class="process-title">{{STEP_1_TITLE}}</div>
+        <p class="process-desc">{{STEP_1_DESC}}</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">02</div>
+        <div class="process-title">{{STEP_2_TITLE}}</div>
+        <p class="process-desc">{{STEP_2_DESC}}</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">03</div>
+        <div class="process-title">{{STEP_3_TITLE}}</div>
+        <p class="process-desc">{{STEP_3_DESC}}</p>
+      </div>
+    </div>
+  </div>
+
+  Benefits
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>Why Choose Us</div>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <span class="benefit-dot"></span>
+        <div class="benefit-text">
+          <div class="benefit-title">{{BENEFIT_1_TITLE}}</div>
+          <div class="benefit-desc">{{BENEFIT_1_DESC}}</div>
+        </div>
+      </div>
+      repeat benefit-card
+    </div>
+  </div>
+
+  FAQ
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>Common Questions</div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">{{FAQ_1_Q}}</div>
+        <p class="faq-a">{{FAQ_1_A}}</p>
+      </div>
+      repeat faq-item
+    </div>
+  </div>
+
+  Related services
+  <div class="page-section">
+    <div class="page-section-title"><span class="dot"></span>Related Services</div>
+    <div class="related-grid">
+      <a href="{{REL_1_URL}}" class="related-card">
+        <div class="related-label">Also Available</div>
+        <div class="related-name">{{REL_1_NAME}}</div>
+      </a>
+      repeat related-card
+    </div>
+  </div>
+
+  Bottom CTA
+  <div class="page-cta-block">
+    <div class="page-cta-headline">Ready to Schedule?</div>
+    <p class="page-cta-sub">{{CTA_SUB}}</p>
+    <div class="page-cta-row">
+      <a href="tel:{{PHONE}}" class="cta-emergency">...</a>
+      <a href="{{CTA_URL}}" class="cta-planned">{{CTA_LABEL}}</a>
+    </div>
+    <div class="page-cta-trust"><strong>{{REVIEW_SCORE}} stars</strong> &mdash; {{SOCIAL_PROOF_LINE}}</div>
+  </div>
+
+</div>
+
+================================================================ -->
