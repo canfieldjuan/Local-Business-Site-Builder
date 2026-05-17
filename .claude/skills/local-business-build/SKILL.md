@@ -112,7 +112,10 @@ The deployment comment block uses this verbatim. Never make up dates.
 
 ## Read the reference files
 
-Read all four in order before generating any HTML:
+Read all four source-of-truth reference files in order before
+generating any HTML or email. (These match the "(03, 06, 07, 08)"
+list at the top of this skill.) Plus consult the prospect JSON
+schema as a supplementary reference when needed.
 
 1. **`references/03-base-template.html`** — the complete CSS framework
    and component library. The output embeds this CSS verbatim. Inject
@@ -121,13 +124,22 @@ Read all four in order before generating any HTML:
 2. **`references/06-build-prompt.md`** — section architecture, contact
    form rule, hero CTA architecture, star widget rendering, footer
    architecture, deployment comment block template, quality checklist.
-   This is the most important file — read it carefully.
+   This is the most important file for HTML generation — read it
+   carefully.
 3. **`references/07-industry-defaults.md`** — trade-specific knowledge.
    For plumbers: hero copy template selection (three-tier rule),
    canonical service catalog, trust signal priority, theme (warm),
-   accent color (`#D9534F`), section sequence.
-4. **`examples/prospect-plumber-template.json`** — only consult if you
-   need to verify the shape of an optional field.
+   accent color (`#D9534F`), section sequence, `hero_search_query`
+   for the Unsplash photo fetch.
+4. **`references/08-pitch-email-prompt.md`** — voice rules, hook table
+   (Longevity / Review score / 24/7 / Family-owned / Discoverability
+   fallback), subject-line algorithm, fabrication guards. Drives the
+   email_draft.md output. Read this before generating the pitch email.
+
+Supplementary (consult on demand, not always required):
+- **`examples/prospect-plumber-template.json`** — schema reference;
+  consult to verify the shape of an optional field if the prospect
+  JSON looks unfamiliar.
 
 ---
 
@@ -346,15 +358,29 @@ source.
 
 ---
 
-## Generate the pitch email draft (alongside the HTML)
+## Generate the pitch email draft (sibling to the HTML, NOT inside the deploy root)
 
-After writing `index.html`, also write `outputs/builds/<slug>/email_draft.md`
-containing the Day-1 pitch email the salesperson will manually send.
+After writing `index.html`, also write the Day-1 pitch email draft to:
 
-Read `references/08-pitch-email-prompt.md` for the voice rules, hooks,
-and template. The email is peer-to-peer, plain-spoken, ~80 words, with
-hooks driven by prospect data (longevity, review score, trade
-competition, etc.).
+```
+outputs/email_drafts/<slug>.md
+```
+
+This is a SIBLING directory to `outputs/builds/<slug>/`, NOT a file
+inside it. The deploy step uploads `outputs/builds/<slug>/` to Vercel
+verbatim; anything inside that directory becomes publicly reachable
+(e.g. at `/email_draft.md`). The pitch email is an internal
+salesperson handoff — it contains recipient hints and a pre-send
+checklist and must never be exposed at a deployed URL. The sibling
+location is the architectural guarantee.
+
+Read `references/08-pitch-email-prompt.md` for the voice rules, hook
+table, subject-line algorithm, and fabrication guards. The email is
+peer-to-peer, plain-spoken, ~80 words. The hook table defines five
+data-driven hooks: Longevity, Review score, 24/7 availability,
+Family-owned, and Discoverability (the last-resort fallback that
+talks ONLY about the prospect's own missing site/form — never about
+Google, competitors, or SERP positions).
 
 The body must contain a literal `[VERCEL_URL_PLACEHOLDER]` token where
 the live URL will go — the salesperson swaps it in after deployment.
@@ -368,6 +394,8 @@ Hard rules from `08`:
 - Subject line under 10 words, no "Re:" prefix, no emojis
 - Explicit "no follow-up unless you say so" exit clause
 - Never fabricate metrics, review quotes, or outcome promises
+- Never name specific national chains, never claim what Google shows,
+  never promise the new site will rank above anyone
 
 ### Natural-language triggers for skipping
 
@@ -381,9 +409,9 @@ any of the following as the skip signal and only write `index.html`:
 - "don't generate the email"
 
 When you skip, also delete any pre-existing
-`outputs/builds/<slug>/email_draft.md` from a prior build so a stale
-draft doesn't sit next to the fresh `index.html`. Mirror the
-`build.py` behavior exactly.
+`outputs/email_drafts/<slug>.md` from a prior build so a stale draft
+doesn't sit in the sibling directory while the freshly built site has
+no matching pitch copy. Mirror the `build.py` behavior exactly.
 
 ---
 

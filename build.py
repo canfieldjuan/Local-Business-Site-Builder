@@ -6,8 +6,12 @@ Usage:
   python build.py <prospect.json> [--skip-deploy] [--skip-image-gen] [--skip-email-draft]
 
 Reads a small prospect JSON, optionally generates a hero image, generates
-a single-page site via Sonnet, writes to outputs/builds/<slug>/, and
-optionally deploys to Vercel and emails the prospect a link.
+a single-page site via Sonnet, writes to outputs/builds/<slug>/, writes
+a pitch email draft to outputs/email_drafts/<slug>.md (siblings -- the
+draft is NOT in the Vercel deploy root and never published), and
+optionally deploys the site to Vercel. The salesperson sends the pitch
+email manually from their own email client AFTER replacing the
+[VERCEL_URL_PLACEHOLDER] token in the draft. No automated send path.
 """
 import os
 import re
@@ -29,6 +33,11 @@ INDUSTRY_DEFAULTS_PATH = "references/07-industry-defaults.md"
 BASE_TEMPLATE_PATH = "references/03-base-template.html"
 EMAIL_PROMPT_PATH = "references/08-pitch-email-prompt.md"
 BUILD_OUTPUT_ROOT = os.path.join("outputs", "builds")
+# Email drafts live in a SIBLING directory, never inside BUILD_OUTPUT_ROOT/<slug>/.
+# The Vercel deploy uses outputs/builds/<slug>/ as its root; anything in there
+# gets published. The pitch email is an internal salesperson handoff and must
+# not be reachable at /email_draft.md on the deployed site.
+EMAIL_DRAFT_ROOT = os.path.join("outputs", "email_drafts")
 BUILD_TEMPERATURE = 0.4
 BUILD_USER_TRUNCATE = 200000
 # Email-draft generation is short, deterministic, and copy-focused.
@@ -267,7 +276,11 @@ def main(prospect_json_path):
     # output_dir is removed whenever the draft is skipped or generation
     # fails. Otherwise a salesperson reviewing the new site could pick
     # up an outdated pitch from a previous build.
-    email_path = os.path.join(output_dir, "email_draft.md")
+    # email_draft.md lives in a SIBLING directory, NOT inside output_dir.
+    # output_dir is the Vercel deploy root; anything in there gets published.
+    # The pitch draft is internal-only.
+    os.makedirs(EMAIL_DRAFT_ROOT, exist_ok=True)
+    email_path = os.path.join(EMAIL_DRAFT_ROOT, f"{slug}.md")
     if "--skip-email-draft" in sys.argv:
         print("[*] Skipping pitch email draft due to --skip-email-draft flag.")
         if os.path.isfile(email_path):
@@ -315,7 +328,7 @@ def main(prospect_json_path):
         return
 
     print(f"\n[+] Live URL: {vercel_url}")
-    email_draft_hint_path = os.path.join(output_dir, "email_draft.md")
+    email_draft_hint_path = os.path.join(EMAIL_DRAFT_ROOT, f"{slug}.md")
     if os.path.isfile(email_draft_hint_path):
         print(f"[*] Pitch email draft ready: {email_draft_hint_path}")
         print(f"[*] Replace [VERCEL_URL_PLACEHOLDER] with {vercel_url}")
