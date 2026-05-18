@@ -269,7 +269,12 @@ on the page. Build it as follows:
     <textarea class="form-textarea" id="lead-message" name="message" rows="4" required></textarea>
   </div>
   <input type="hidden" name="_subject" value="New lead from [PROSPECT.business_name] website">
-  <input type="hidden" name="_redirect" value="[PROSPECT.thank_you_url or omit if absent]">
+  <!-- If PROSPECT.thank_you_url is set, include:
+       <input type="hidden" name="_redirect" value="[PROSPECT.thank_you_url]">
+       If null/absent, OMIT the entire input line (do NOT render with
+       value=""; Formspree treats empty _redirect as a 302 to a default
+       Formspree-branded thank-you page, which is fine and is the
+       desired behavior). -->
   <button class="form-submit" type="submit">Send My Request</button>
   <p class="form-trust">[ONE verifiable trust signal line drawn from prospect data -- see rules below]</p>
 </form>
@@ -290,7 +295,7 @@ Rules:
     1. `Licensed, insured, and locally owned.` -- if prospect.licensed_and_insured is true
     2. `Family-owned since [established_year].` -- if prospect.family_owned is true AND prospect.established_year is set
     3. `Serving [SERVICE_AREA] since [established_year].` -- if established_year is set
-    4. `Licensed, insured plumber serving [CITY].` -- always valid for plumbers
+    4. `Licensed, insured [TRADE] serving [CITY].` -- always valid; substitute prospect.trade verbatim (e.g., "plumber", "HVAC contractor", "electrician"). Only fall through to this when 1-3 don't apply.
   Do NOT invent "We respond within X hours", "100% satisfaction", "free
   consultation", "no obligation", etc. unless they appear verbatim in
   the prospect JSON.
@@ -330,11 +335,58 @@ HERO CHIP (eyebrow badge above the headline):
 ## THEME & TYPOGRAPHY
 
 Use the theme specified in INDUSTRY_DEFAULTS for the prospect's trade
-(plumber -> `warm`). Pull the matching Google Fonts import and CSS
-variable assignments from `02-redesign-gen-prompt.md` THEME TYPOGRAPHY
-SPECS section -- they are the same six themes.
+(plumber -> `warm`, HVAC -> `warm`, and other home-services trades default
+to `warm` unless their 07 section specifies otherwise). Honor
+`prospect.theme_override` if set.
 
-If prospect.theme_override is set in JSON, honor it.
+The build skill is a standalone path -- do NOT reach into
+`02-redesign-gen-prompt.md` (which lives in the redesign flow) to look
+up typography. Use the inline specs below for the supported themes:
+
+### warm (default for plumber, HVAC, and most local home-services trades)
+
+```html
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Lato:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+```
+
+In `:root` override the typography vars:
+```
+--font-display:  'Lexend', sans-serif;
+--font-body:     'Lato', sans-serif;
+--font-serif:    'Lora', Georgia, serif;
+--card-radius:   6px;
+```
+
+### minimal (for sleeker / professional-services builds)
+
+```html
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+```
+
+In `:root`:
+```
+--font-display:  'DM Sans', sans-serif;
+--font-body:     'DM Sans', sans-serif;
+--font-serif:    'DM Serif Display', Georgia, serif;
+--card-radius:   8px;
+```
+
+### civic (for municipal / utility / clinical feel)
+
+```html
+<link href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Noto+Sans:wght@400;500;600&family=Merriweather:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+```
+
+In `:root`:
+```
+--font-display:  'Fjalla One', sans-serif;
+--font-body:     'Noto Sans', sans-serif;
+--font-serif:    'Merriweather', Georgia, serif;
+--card-radius:   4px;
+```
+
+For any other theme name from prospect.theme_override that isn't
+listed above, fall back to `warm` and emit a warning in the report.
 
 ---
 
@@ -432,19 +484,34 @@ Generated line entirely rather than inventing a value.
   LEAD HANDLER:    Formspree (free tier 50 submissions/mo)
   ONGOING COST:    ~$15/yr (domain renewal only)
 
+  HERO PHOTO:      [credit_name] via Unsplash ([credit_url])
+  PHOTO ID:        [photo_id]
+  PHOTO LICENSE:   Unsplash License (free, no on-page attribution required;
+                   credited here per Unsplash API terms of service)
+
   DEPLOY:
   1. Confirm prospect.formspree_endpoint is set on the form action.
   2. Run from project root: vercel --prod --yes --name [SITE_SLUG]
   3. Custom domain: add it in Vercel dashboard, point DNS.
-
-  SALES PITCH:
-  "Right now when someone in [CITY] searches for a plumber, you don't
-  show up. National chains do. I built this in an afternoon. It's
-  yours for a one-time build fee plus $15/yr for the domain. Lead
-  comes straight to your inbox."
   ============================================================
 -->
 ```
+
+**HERO PHOTO / PHOTO ID / PHOTO LICENSE lines**: include these THREE
+lines only when `prospect.photos[0]` carries `credit_name`,
+`credit_url`, and `photo_id` fields (i.e. the photo was fetched from
+Unsplash). When the hero is a Flux-generated image or a manually-
+uploaded photo without credit metadata, OMIT these three lines
+entirely. The Unsplash API terms of service require credit somewhere
+in the source (a non-visible HTML comment is sufficient and is the
+preferred placement since the prospect's brand owns the page surface,
+not the photographer).
+
+**SALES PITCH line was removed from the template** -- it was a
+canned line about Roto-Rooter saturation that violated the 08
+fabrication guards (specific national-chain claims, unverified SERP
+observations). The salesperson writes the sales pitch when they send
+the email_draft.md, not in the deployment comment.
 
 ## STAR WIDGET RENDERING
 

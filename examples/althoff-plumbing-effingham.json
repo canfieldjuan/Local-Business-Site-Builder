@@ -1,0 +1,39 @@
+{
+  "_comment": "Verified data: business_name, address, phone, FB-only status, owner_first_name='Clint' (confirmed 2026-05-17 by salesperson). years_in_business=10 / established_year=2016 per salesperson report -- treat as authoritative even though BBB filing date is 12/14/2015 (BBB filing != founding). family_owned left null pending confirmation; named-after-owner pattern strongly suggests yes but not yet verified.",
+  "business_name": "Althoff Plumbing, Inc.",
+  "trade": "plumber",
+  "city": "Effingham",
+  "state": "IL",
+  "phone": "(217) 663-5644",
+  "owner_email": null,
+  "owner_first_name": "Clint",
+  "years_in_business": 10,
+  "established_year": 2016,
+  "family_owned": null,
+  "licensed_and_insured": true,
+  "has_24_7": null,
+  "service_radius": "Effingham, Teutopolis, Altamont, Dieterich, and surrounding communities within 25 miles",
+  "hours": null,
+  "services": [],
+  "address": "612 E North Ave, Effingham, IL 62401",
+  "google_business_url": null,
+  "google_review_score": 4.0,
+  "google_review_count": 2,
+  "reviews": [
+    {
+      "author": null,
+      "rating": 4,
+      "date": null,
+      "platform": "Google",
+      "text": "Clint responded to replace my basement sanitary lift pump. He was prompt, courteous and left no mess. I highly recommend Althoff Plumbing for any related service!!",
+      "attributes": ["Responsiveness", "Punctuality", "Quality", "Professionalism"]
+    }
+  ],
+  "photos": [],
+  "brand_colors": null,
+  "theme_override": null,
+  "formspree_endpoint": "https://formspree.io/f/xnjraeqp",
+  "thank_you_url": null,
+  "salesperson_first_name": null,
+  "slug": "althoff-plumbing-effingham"
+}

@@ -1,6 +1,6 @@
 ---
 name: local-business-build
-description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Plumbers are the only supported trade in v1; for any other trade, complete the build with plumber defaults and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. Claude does the HTML generation itself -- this skill does NOT call OpenRouter, Flux, or any LLM/image-generation API. It MAY call the Unsplash photo-library API for hero images when `UNSPLASH_ACCESS_KEY` is set (free, 50 req/hr); falls back to a placeholder with manual-fetch suggestions when absent. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
+description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Supported trades in v1: plumbers and HVAC contractors. For any other trade, complete the build with the closest-fit defaults (typically plumber) and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. The supported list grows as new `## TRADE: <name>` sections are added to `references/07-industry-defaults.md`. Claude does the HTML generation itself -- this skill does NOT call OpenRouter, Flux, or any LLM/image-generation API. It MAY call the Unsplash photo-library API for hero images when `UNSPLASH_ACCESS_KEY` is set (free, 50 req/hr); falls back to a placeholder with manual-fetch suggestions when absent. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
 ---
 
 # Local Business Site Builder
@@ -127,6 +127,18 @@ schema as a supplementary reference when needed.
    and component library. The output embeds this CSS verbatim. Inject
    content into existing classes; do NOT invent new classes or write
    new CSS rules outside the `:root` token block.
+
+   **Read in two chunks.** This file is ~35,700 tokens, which exceeds
+   the Read tool's 25,000-token single-call limit. A single
+   `Read(file_path=...)` will fail with a token-limit error. Read it
+   twice with explicit offsets:
+   - `Read(file_path="references/03-base-template.html", offset=1,    limit=1200)` — design tokens, reset, nav, hero, trust strip, coverage band, services/benefits grids, footer
+   - `Read(file_path="references/03-base-template.html", offset=1200, limit=1200)` — interior-page components, contact form, hero chip, footer coverage map, reveal animations, body markup examples
+
+   Both chunks must land in context before HTML generation — the
+   `:root` token block lives in chunk 1 but the hero-chip and
+   ft-coverage-map CSS (both referenced by the from-scratch build)
+   live in chunk 2.
 2. **`references/06-build-prompt.md`** — section architecture, contact
    form rule, hero CTA architecture, star widget rendering, footer
    architecture, deployment comment block template, quality checklist.
@@ -289,11 +301,23 @@ Read `prospect.trade`, look up `hero_search_query` in
 
 Example entry in 07 (plumber):
 ```
-hero_search_query: "plumber service truck residential work"
+hero_search_query: "plumbing"
 ```
 
-If the trade is not in 07, construct a safe fallback:
-`"{trade} professional service work"`
+**Fewer words wins on Unsplash.** Unsplash search is keyword-based,
+not phrase-based -- multi-word queries narrow the pool to photos
+tagged with ALL words, and few photographers tag with 4+ words. The
+single-word `"plumbing"` returns 2,314 results (top match: a
+plumber working on a wall pipe). An earlier multi-word query
+`"plumber service truck residential work"` returned only 2 results
+with an unusable top match (snow-covered crane truck). Start each
+new trade with the single-word trade name and only narrow if the
+top result is genuinely off-target.
+
+If the trade is not in 07, construct a safe single-word fallback:
+just `"{trade}"`. Avoid the older `"{trade} professional service
+work"` pattern -- it's the same multi-word trap that broke the
+plumber query.
 
 Never include the business name, phone number, or any text that
 would appear in the image. Unsplash is a photo library -- these
@@ -303,67 +327,87 @@ fields don't affect results and can break the query.
 
 ### Step C -- Fetch from Unsplash
 
-```python
-import os, requests
+The skill runs in a Bash context, so use `curl` + `jq`. `jq` is
+standard on macOS / most Linux distros that ship Claude Code; if
+it's missing, take the Manual Fallback path rather than installing
+new dependencies mid-build.
 
-query      = "<hero_search_query from 07>"
-access_key = os.environ["UNSPLASH_ACCESS_KEY"]
+```bash
+QUERY="<hero_search_query from 07>"
 
-r = requests.get(
-    "https://api.unsplash.com/search/photos",
-    headers={"Authorization": f"Client-ID {access_key}"},
-    params={
-        "query":       query,
-        "per_page":    1,
-        "orientation": "landscape",
-        "content_filter": "high"
-    }
-)
+RESPONSE=$(curl -sf -G "https://api.unsplash.com/search/photos" \
+  -H "Authorization: Client-ID $UNSPLASH_ACCESS_KEY" \
+  --data-urlencode "query=$QUERY" \
+  --data-urlencode "per_page=1" \
+  --data-urlencode "orientation=landscape" \
+  --data-urlencode "content_filter=high")
 
-results = r.json().get("results", [])
+RESULTS_COUNT=$(echo "$RESPONSE" | jq '.results | length')
+if [ "$RESULTS_COUNT" -eq 0 ]; then
+    echo "[!] No Unsplash results for query: $QUERY"
+    # Fall through to Manual Fallback -- do NOT continue with Step D.
+else
+    HERO_URL=$(echo     "$RESPONSE" | jq -r '.results[0].urls.regular')
+    PHOTO_ID=$(echo     "$RESPONSE" | jq -r '.results[0].id')
+    CREDIT_NAME=$(echo  "$RESPONSE" | jq -r '.results[0].user.name')
+    CREDIT_URL=$(echo   "$RESPONSE" | jq -r '.results[0].user.links.html')
+    DOWNLOAD_LOC=$(echo "$RESPONSE" | jq -r '.results[0].links.download_location')
 
-if not results:
-    # fall through to Manual Fallback
-    raise ValueError(f"No Unsplash results for query: {query}")
+    # Required by Unsplash API ToS: hit the download_location once per use.
+    # This is not an image download -- it's an analytics ping. -o /dev/null
+    # discards the empty response body.
+    curl -sf -o /dev/null \
+        -H "Authorization: Client-ID $UNSPLASH_ACCESS_KEY" "$DOWNLOAD_LOC"
 
-photo      = results[0]
-hero_url   = photo["urls"]["regular"]
-photo_id   = photo["id"]
-credit     = photo["user"]["name"]
-credit_url = photo["user"]["links"]["html"]
-
-# Trigger required download event (Unsplash API terms)
-requests.get(
-    photo["links"]["download_location"],
-    headers={"Authorization": f"Client-ID {access_key}"}
-)
-
-print(f"[+] Hero photo: {hero_url}")
-print(f"[+] Credit: {credit} ({credit_url})")
+    echo "[+] Hero photo:   $HERO_URL"
+    echo "[+] Credit:       $CREDIT_NAME ($CREDIT_URL)"
+    echo "[+] Photo ID:     $PHOTO_ID"
+fi
 ```
+
+The five extracted shell variables (`HERO_URL`, `PHOTO_ID`,
+`CREDIT_NAME`, `CREDIT_URL`, `DOWNLOAD_LOC`) feed Step D. Either
+pass them through the current shell session or write them to a
+small JSON file the HTML-generation step can read back -- whichever
+fits the current invocation pattern. Do NOT hand the raw
+`$RESPONSE` JSON into the LLM context: it's ~30KB of metadata per
+result and you only need the five fields.
 
 ---
 
 ### Step D -- Inject into HTML
 
-Use `hero_url` as the hero section background:
+Use `$HERO_URL` as the hero section background:
 
 ```html
-style="background-image: url('{{ hero_url }}')"
+style="background-image: url('{{ HERO_URL }}')"
 ```
 
-Add attribution to the deployment comment block at the top of the HTML:
+Add attribution to the deployment comment block at the top of the
+HTML. This block format is the canonical one specified by
+`references/06-build-prompt.md` -- keep it byte-identical to the
+template in 06's DEPLOYMENT COMMENT BLOCK section so the two source-
+of-truth files don't drift:
 
 ```html
 <!--
   ...existing deployment fields...
-  Hero photo: {{ credit }} via Unsplash ({{ credit_url }})
-  Photo ID:   {{ photo_id }}
+  HERO PHOTO:      {{ CREDIT_NAME }} via Unsplash ({{ CREDIT_URL }})
+  PHOTO ID:        {{ PHOTO_ID }}
+  PHOTO LICENSE:   Unsplash License (free, no on-page attribution required;
+                   credited here per Unsplash API terms of service)
 -->
 ```
 
 Attribution goes in the comment block only -- do NOT render it
-visibly on the page. The prospect's brand is the focus.
+visibly on the page. The Unsplash License is permissive: no visible
+attribution required, but crediting in a non-visible comment is the
+preferred placement because the prospect's brand owns the page
+surface, not the photographer.
+
+If you skipped the Unsplash fetch (Manual Fallback path), OMIT all
+three lines (HERO PHOTO / PHOTO ID / PHOTO LICENSE) from the
+deployment comment -- there's no photo to credit.
 
 ---
 
@@ -406,9 +450,10 @@ Report to user:
 
 Each trade entry in 07 needs a `hero_search_query` field. Current coverage:
 
-| Trade    | Query                                      | Status  |
-|----------|--------------------------------------------|---------|
-| plumber  | "plumber service truck residential work"   | defined |
+| Trade    | Query        | Status  |
+|----------|--------------|---------|
+| plumber  | "plumbing"   | defined |
+| hvac     | "hvac technician" | defined (multi-word per the HVAC-specific exception in 07 -- single-word `"hvac"` returns commercial-system stock without humans; the `<trade> technician` form is the working fallback when single-word fails the human-at-work check) |
 
 Add a row to this table and the corresponding field in 07 whenever a
 new trade is onboarded. The skill reads from 07 -- no changes needed
@@ -499,14 +544,16 @@ After writing the file, print a short summary to the user:
   outputs/builds/<slug>/images/hero.jpg"
 - Formspree endpoint status: "real endpoint set" / "placeholder — update
   before sharing"
-- **If `prospect.trade != "plumber"`**, ALSO print verbatim:
-  `[!] Trade mismatch: industry-defaults.md covers plumbing only. Section`
-  `    order, canonical service catalog, hero copy templates, trust signal`
-  `    priority, theme, and default palette were all derived from plumber`
-  `    defaults. Review the output for trade-appropriate copy before sharing.`
+- **If `prospect.trade` is NOT in the supported list (currently `plumber`, `hvac`)**, ALSO print verbatim:
+  `[!] Trade mismatch: industry-defaults.md does not have a section for prospect.trade.`
+  `    The build used the closest-fit trade defaults (typically plumber). Section`
+  `    order, canonical service catalog, hero copy templates, trust signal priority,`
+  `    theme, and default palette may not match the prospect's actual trade.`
+  `    Review the output for trade-appropriate copy before sharing.`
   This is the trade-mismatch warning referenced in the skill description.
-  Do NOT silently render a non-plumber site using plumber defaults — the
-  warning is the user's signal to manually review and adjust.
+  Do NOT silently render an unsupported-trade site using fallback defaults --
+  the warning is the user's signal to manually review and adjust. The supported
+  list expands as new `## TRADE: <name>` sections are added to 07-industry-defaults.md.
 - Reminder: open the file in a browser to preview before sharing
 
 ---

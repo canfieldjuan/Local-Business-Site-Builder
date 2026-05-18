@@ -3,8 +3,11 @@
 Used by `build.py` (the from-scratch build pipeline) AND by the
 `local-business-build` Claude Code skill to generate a Day-1 pitch
 email draft alongside the generated site. The draft is written to
-`outputs/builds/<slug>/email_draft.md` for the salesperson to review,
-edit, and send manually from their own email client.
+`outputs/email_drafts/<slug>.md` -- a SIBLING directory to
+`outputs/builds/<slug>/` so the draft is never inside the Vercel
+deploy root and can't be served publicly at `/email_draft.md`. The
+salesperson reviews, edits, and sends it manually from their own
+email client.
 
 **No auto-send. No follow-up emails in this prompt.** The follow-up
 "demo customer request" email is a future addition.
@@ -47,6 +50,14 @@ Not a sales rep. Not a consultant. Not a brand. A person.
 - "next-level" / "10x your business" / "crushing it"
 - Generic flattery of any kind ("great reputation", "stellar reviews")
 - "transform" / "optimize" / "leverage"
+- "on spec" / "on speculation" -- agency/freelance shorthand that
+  reads as marketer-speak to trade prospects. The phrase means
+  "I built this without being asked, no obligation," but trade
+  owners don't know the term and it triggers defensive reactions
+  about being sold to. Just say "built a site because you don't
+  have one yet" or skip the framing entirely -- the "$297 one-time"
+  + "no follow-up unless you want to chat" lines already convey the
+  no-obligation reality without naming it.
 
 **DO use**:
 - The owner's first name if known. Otherwise no salutation -- start
@@ -176,15 +187,16 @@ Subject: Built a plumbing website for Drees Plumbing
 
 Mike --
 
-Built a website for Drees Plumbing on spec. It's live:
+Built a website for Drees Plumbing. It's live:
 
 [VERCEL_URL_PLACEHOLDER]
 
-No charge to look. If the design works for you, I host it for you
-for $15/year (just the domain -- no monthly fee, no platform
-lock-in). Right now, anyone searching for Drees Plumbing online has
-no site of yours to land on -- no page describing what you do, no
-form they can fill out at 10pm. This gives them one.
+No charge to look -- $297 covers the website and the first year of
+your domain. After that, the annual renewal at cost (usually
+$15-25/year, more for a premium name). Right now, anyone searching
+for Drees Plumbing online has no site of yours to land on -- no
+page describing what you do, no form they can fill out at 10pm.
+This gives them one.
 
 Take a look or don't. Either way no follow-up unless you say
 "yeah, let's talk."
@@ -192,9 +204,15 @@ Take a look or don't. Either way no follow-up unless you say
 -- Juan
 ```
 
-That's the target. ~75 words, 5 short sentences, frames the
+That's the target. Under 100 words, ~6 short sentences, frames the
 prospect's OWN reachability (a fact: they have no website), NOT
-what Google shows or where competitors rank. Explicit exit clause.
+what Google shows or where competitors rank. Pricing language is
+load-bearing: `$297 covers the website and the first year of your
+domain` (website is already built; year-one domain absorbed into the
+same fee so the prospect evaluates one number, not two) + `annual
+renewal at cost` (year 2 onward only; signals no monthly lock-in,
+no markup on the recurring, variable by name choice). Explicit
+exit clause.
 
 ### Drafted output when data is sparse
 
@@ -203,12 +221,13 @@ If `owner_first_name` is null, drop the salutation:
 ```
 Subject: Built a plumbing website for [Business Name]
 
-Built a website for [Business Name] on spec. It's live:
+Built a website for [Business Name]. It's live:
 
 [VERCEL_URL_PLACEHOLDER]
 
-No charge to look. If the design works for you, I host it for you
-for $15/year. Just the domain -- no monthly fee, no lock-in.
+No charge to look -- $297 covers the website and the first year of
+your domain. After that, the annual renewal at cost (usually
+$15-25/year, more for a premium name).
 
 Take a look or don't. Either way no follow-up unless you say
 "yeah, let's talk."
@@ -275,3 +294,18 @@ final URL.
   pipeline defaults to "Juan" when `prospect.salesperson_first_name`
   is null, but the prompt should respect whatever value is passed.
 - Body length under 100 words. Subject line under 10 words.
+- Pricing language: state the one-time fee as `$297 covers the
+  website and the first year of your domain` (the website asset exists
+  and the prospect is buying ownership; year-one domain registration
+  is absorbed into the same fee so the prospect has one number to
+  evaluate, not two). State the recurring as `the annual renewal at
+  cost (usually $15-25/year, more for a premium name)` -- this is
+  year 2 onward, NOT year 1. NEVER quote a flat monthly domain fee
+  -- domain renewals are annual and prices vary by name. NEVER call
+  the recurring cost "hosting" -- Vercel hosts static sites free;
+  the only ongoing line item is the domain itself, passed through
+  at cost (no markup, no profit on the recurring). The first-year-
+  included framing assumes the salesperson absorbs ~$10-15 of a
+  standard .com out of the $297. If the prospect requests a premium
+  domain (>$25/yr), pass that delta through transparently -- don't
+  eat the premium-domain difference silently.
