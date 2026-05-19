@@ -89,8 +89,20 @@ Output rules:
   The last characters must be `</html>`.
 - Single complete HTML file containing the full `03-base-template.html`
   CSS and the generated HTML body.
-- Populate the `:root` block. Use prospect.brand_colors if provided,
-  otherwise the trade-default palette from INDUSTRY_DEFAULTS.
+- Populate the `:root` block in this priority order:
+    1. If `prospect.brand_colors` is provided, use those values
+       verbatim (this is the explicit-brand path; the harness skips
+       palette selection in this case).
+    2. Else if `prospect._computed_palette` is present (the harness
+       picks it deterministically from the trade's `palette_variants`
+       in 07), use `_computed_palette.accent` for `--accent` and
+       `_computed_palette.accent_dark` for `--accent-dark`. The
+       secondary color and any other tokens still come from the
+       trade's Color defaults section.
+    3. Else fall back to the first `palette_variants` entry in 07
+       for that trade (the historical default). Only fires when the
+       harness fails to populate `_computed_palette` -- normally a
+       configuration bug worth investigating.
 - Update the Google Fonts import to match the chosen theme typography.
 - All links use real URLs from PROSPECT_JSON. The form action MUST be
   the prospect.formspree_endpoint value verbatim.

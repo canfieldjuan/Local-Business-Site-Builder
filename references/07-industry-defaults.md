@@ -405,25 +405,35 @@ catalog). When each one shines for a plumber prospect:
 
 ### Color defaults
 
-If prospect provided brand colors, use them. If not:
-- Accent: **emergency red** (`#B91C1C`, Tailwind red-700) --
-  emergency/urgency signal, **WCAG AA-compliant** with white
-  button text (~6.5:1 contrast on `.nav-cta`, `.form-submit`,
-  `.cta-emergency` styles -- comfortably above the 4.5:1 AA
-  threshold for normal-size text). The shallower `#D9534F`
-  (Bootstrap red, ~4.0:1) fails AA against white text on
-  normal-size labels and is **explicitly rejected** as the
-  primary accent for buttons that contain white text.
-- Accent-dark: `#991B1B` (Tailwind red-800, hover state, ~8.2:1)
-- Secondary: navy (`#1F3A5F`, ~11.5:1) -- trust/professional
+If prospect provided brand colors, use them. If not, the harness
+(`build.py`'s `select_palette()`) picks one of the variants below
+deterministically by hash of `business_name` and injects it as
+`prospect._computed_palette` (accent + accent_dark hex codes).
+Different plumber prospects within the same town get visibly
+different reds; the same prospect always gets the same one.
+
+All variants are **WCAG AA-compliant** against white button text
+(`.nav-cta`, `.form-submit`, `.cta-emergency`). The shallower
+`#D9534F` (Bootstrap red, ~4.0:1) fails AA and is **explicitly
+rejected** for accent slots that overlay white text.
+
+```
+palette_variants:
+- accent: "#B91C1C", accent_dark: "#991B1B"  -- classic emergency red (~6.5:1 / ~8.2:1), Tailwind red-700/800
+- accent: "#991B1B", accent_dark: "#7F1D1D"  -- deep red (~8.2:1 / ~10:1), Tailwind red-800/900 -- conveys gravity
+- accent: "#C2410C", accent_dark: "#9A3412"  -- orange-red (~5.2:1 / ~7.3:1), Tailwind orange-700/800 -- less aggressive
+- accent: "#B7372D", accent_dark: "#8C2E26"  -- warm crimson (~5.9:1 / ~8.3:1), custom -- between red and rust
+```
+
+- Secondary: navy (`#1F3A5F`, ~11.5:1) -- trust/professional, constant across variants
 - Background: white (light theme)
 
-The `#B91C1C` red-700 was chosen over the shallower Bootstrap
-`#D9534F` after contrast testing -- both visually read as
-"plumber emergency / urgent service" but only `#B91C1C` passes
-WCAG AA on white-text buttons. The deeper saturation reads as
-"this is serious, call now" which is the right emotional register
-for a plumber's primary CTA.
+The four variants all sit inside the "plumber emergency / urgent
+service" emotional register but differ enough in hue and weight to
+fingerprint two plumbers in the same service area. Variant
+selection is independent of theme selection (see 09-themes.md):
+two plumber prospects could share a theme and still get different
+palette variants, or share a palette and get different themes.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`: accent
 appears on AT MOST 3-4 elements (primary CTA, sticky phone, one badge).
@@ -692,25 +702,31 @@ catalog). When each one shines for an HVAC prospect:
 
 ### Color defaults
 
-If prospect provided brand colors, use them. If not:
-- Accent: **HVAC industry blue** (`#1E5BB8`) -- cool, professional,
-  associated with cooling/comfort. **WCAG AA-compliant** with
-  white button text (~6.4:1 contrast on `.nav-cta`,
-  `.form-submit`, `.cta-emergency` styles).
-- Accent-dark: `#164B96` (darker variant for hover states, ~8.3:1)
-- Secondary: **emergency red** (`#B91C1C`, Tailwind red-700,
-  ~6.5:1) -- emergency/urgency signal, reserved for "no heat" /
-  "no AC" emergency CTAs only. Matches plumber accent for visual
-  consistency across the home-services trade family and uses the
-  same WCAG-AA-compliant red the plumber section adopted to
-  replace the shallower `#D9534F` (~4.0:1, fails AA).
+If prospect provided brand colors, use them. If not, the harness
+(`build.py`'s `select_palette()`) picks one of the blue variants
+below deterministically by hash of `business_name` and injects it
+as `prospect._computed_palette`. All variants are **WCAG AA-
+compliant** against white button text.
+
+```
+palette_variants:
+- accent: "#1E5BB8", accent_dark: "#164B96"  -- HVAC industry blue (~6.4:1 / ~8.3:1), historical default
+- accent: "#1E40AF", accent_dark: "#1E3A8A"  -- deep royal blue (~8.7:1 / ~10:1), Tailwind blue-800/900
+- accent: "#0E7490", accent_dark: "#155E75"  -- cool teal-blue (~5.4:1 / ~7.5:1), Tailwind cyan-700/800 -- leans toward "cooling/comfort"
+- accent: "#1D4ED8", accent_dark: "#1E40AF"  -- bright royal (~6.7:1 / ~8.7:1), Tailwind blue-700/800 -- more energetic
+```
+
+- Secondary: **emergency red** (`#B91C1C`, Tailwind red-700, ~6.5:1) -- reserved for "no heat" / "no AC" emergency CTAs only. Constant across variants. Matches plumber accent for visual consistency across the home-services trade family and uses the same WCAG-AA-compliant red the plumber section adopted to replace the shallower `#D9534F` (~4.0:1, fails AA).
 - Background: white (light theme)
 
 The blue/red split intentionally parallels the cool/hot duality
 of HVAC services (cooling = blue, heating = red). This differs
 from the plumber default (red-dominant) because plumber visits
 are uniformly urgent while HVAC is split between urgent comfort
-failures and planned high-ticket installs.
+failures and planned high-ticket installs. The four blue variants
+all preserve the "cool/professional" register but differ enough
+in hue and weight to fingerprint two HVAC contractors in the
+same service area.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
 accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
@@ -1001,29 +1017,31 @@ catalog). When each one shines for an electrician prospect:
 
 ### Color defaults
 
-If prospect provided brand colors, use them. If not:
-- Accent: **electric amber** (`#B45309`, amber-700) -- electrical
-  industry caution/voltage color, **WCAG AA-compliant** with
-  white button text (~5.0:1 contrast on `.nav-cta`, `.form-submit`,
-  `.cta-emergency` styles -- comfortably above the 4.5:1 AA
-  threshold for normal-size text). The shallower amber-600
-  (`#D97706`) fails AA at ~3.4:1 against white text on normal-size
-  labels -- do not use it as the primary accent for buttons that
-  contain white text.
-- Accent-dark: `#92400E` (amber-800, hover state)
-- Secondary: navy (`#1F3A5F`) -- trust/professional signal for
-  emergency CTAs and panel-upgrade CTAs
+If prospect provided brand colors, use them. If not, the harness
+(`build.py`'s `select_palette()`) picks one of the amber/orange
+variants below deterministically by hash of `business_name` and
+injects it as `prospect._computed_palette`. All variants are
+**WCAG AA-compliant** against white button text. The shallower
+amber-600 (`#D97706`, ~3.4:1) fails AA and is **explicitly
+rejected** for accent slots that overlay white text.
+
+```
+palette_variants:
+- accent: "#B45309", accent_dark: "#92400E"  -- electric amber (~5.0:1 / ~7.0:1), Tailwind amber-700/800, historical default
+- accent: "#92400E", accent_dark: "#78350F"  -- deep amber (~7.0:1 / ~9.0:1), Tailwind amber-800/900 -- grounded, less neon
+- accent: "#C2410C", accent_dark: "#9A3412"  -- warm orange (~5.2:1 / ~7.3:1), Tailwind orange-700/800 -- echoes voltage-warning palette
+- accent: "#A16207", accent_dark: "#854D0E"  -- rich gold-orange (~4.9:1 / ~6.9:1), Tailwind yellow-700/800 -- closer to "caution" yellow without crossing into illegibility
+```
+
+- Secondary: navy (`#1F3A5F`, ~11.5:1) -- trust/professional signal for emergency CTAs and panel-upgrade CTAs. Constant across variants.
 - Background: white (light theme)
 
-The amber accent intentionally echoes the industry's electrical
-caution / breaker-label / voltage-warning palette without crossing
-into pure yellow (which has poor contrast for white text on
-yellow buttons). The specific amber-700 (`#B45309`) was chosen
-over amber-600 (`#D97706`) after contrast testing -- both visually
-read as "electrical caution" but only `#B45309` passes WCAG AA
-on white-text buttons. Distinct from plumber's red-orange and
-HVAC's blue, so each trade build has its own visual identity at
-a glance.
+The four variants all echo the industry's electrical caution /
+breaker-label / voltage-warning palette without crossing into pure
+yellow (which has poor contrast for white text). They stay
+distinct from plumber's red and HVAC's blue at a glance while
+giving same-trade prospects in the same area visibly different
+accents.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
 accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
