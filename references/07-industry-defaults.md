@@ -8,6 +8,35 @@ no current online presence.
 This is NOT a content database -- it's a defaults book. Prospect-specified
 values always win. Use these only to fill gaps.
 
+**Conditional trust clauses (applies to ALL trade sections below):**
+The Tier 1/2/3 subhead templates in each trade section include
+default trailing trust phrases such as "Licensed, insured,
+family-owned" or "[STATE] Master Electrician licensed." Treat
+these as **template defaults that get stripped when the
+underlying prospect field is missing**, not unconditional
+rendering instructions:
+
+- Drop "Licensed, insured" if `prospect.licensed_and_insured`
+  is not true.
+- Drop "family-owned" if `prospect.family_owned` is not true.
+- Drop "locally owned" if no equivalent prospect field is set
+  (rarely captured in JSON; treat as "family_owned OR
+  locally-confirmed").
+- Drop "Master Electrician" / "Master-licensed" / similar
+  trade-specific certifications if the corresponding
+  `prospect.licenses` / `prospect.certifications` / explicit
+  flag is not set. Fall back to the generic "Licensed" phrasing.
+- Drop any "since [YEAR]" / "[YEARS] years" clause if
+  `prospect.established_year` is null.
+- Drop "Free estimates" / "Same-day service" / equivalent
+  service-promise phrases unless verbatim in prospect data.
+
+If the trailing trust sentence collapses to empty after
+stripping, end the subhead at the prior period. **Never
+fabricate a credential, ownership claim, or service promise the
+prospect data does not support** -- the SKILL.md fabrication
+guards override the defaults below.
+
 ---
 
 ## TRADE: plumber
@@ -546,7 +575,7 @@ items always win.
 | Ceiling Fan Installation      | New fan, replacement, with-light upgrade, smart-fan retrofit.       |
 | Generator Installation        | Whole-home standby generators (Generac, Kohler) with auto transfer. |
 | EV Charger Installation       | Level 2 home charging (Tesla, ChargePoint, JuiceBox).               |
-| Smart Home Wiring             | Nest, Ring, smart switches, mesh wifi infrastructure.               |
+| Smart Home Wiring             | Nest, Ring, smart switches, mesh Wi-Fi infrastructure.              |
 | Wiring Repair                 | Knob-and-tube replacement, aluminum repairs, troubleshooting.       |
 | Electrical Inspection         | Pre-purchase home inspection, code compliance, insurance reports.   |
 | Emergency Electrical Service  | 24/7 response for fire-hazard wiring and total power loss.          |
@@ -587,13 +616,19 @@ it because there is no longer-tenure story to tell yet.
 
 **Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
 
-New business without 24/7. Lead on master-electrician licensing,
-not just generic "licensed" -- IL requires a Master Electrician
-license for residential work above a low threshold, and surfacing
-it differentiates a real electrician from a handyman.
+New business without 24/7. The default phrasing leads on generic
+"Licensed Electrician" because most US states require some form
+of state or local electrician licensing. Upgrade to "Licensed
+Master Electrician" ONLY when `prospect.master_electrician_license`
+(or equivalent in `prospect.licenses` / `prospect.certifications`)
+is verified -- many states use the term "Master Electrician" for
+the highest residential tier, but not all electricians hold it,
+and claiming it falsely violates the SKILL.md fabrication guards.
 
-- Headline: `Licensed Master Electrician Serving [CITY]`
-- Subhead: `State-licensed residential and commercial electrical work. Fast response, upfront flat-rate pricing, no franchise dispatch fees padding your bill.`
+- Headline (default): `Licensed Electrician Serving [CITY]`
+- Headline (upgrade if Master license verified): `Licensed Master Electrician Serving [CITY]`
+- Subhead: `Residential and commercial electrical work. Fast response, upfront flat-rate pricing, no franchise dispatch fees padding your bill.`
+  (Append ` Master-electrician licensed.` only if the Master credential is verified per the conditional-trust-clauses rule in the intro.)
 
 NEVER use mission-statement language ("We believe in honest
 electrical work", "Our mission is to..."). NEVER use "dedicated"
@@ -608,17 +643,24 @@ tiers if a higher one exists.
 
 1. Third-party review score with platform name (`4.8 from 87 Google Reviews`)
 2. Years in business + location (`Serving [CITY] since [YEAR]`)
-3. **State Master Electrician license** (`IL Master Electrician licensed, #ME-xxxxxx`) -- electrician-specific, real verifiable credential
-4. IBEW Local membership (if applicable, e.g. `IBEW Local 538 member`) -- union signal indicates higher training
+3. **State Master Electrician license** (`[STATE] Master Electrician licensed, #[LICENSE_NUMBER]` -- substitute `prospect.state` and the prospect's actual license number; do NOT hard-code Illinois or any other jurisdiction here) -- electrician-specific, real verifiable credential
+4. IBEW Local membership (if applicable, e.g. `IBEW Local [NUMBER] member` -- use the prospect's actual local chapter number) -- union signal indicates higher training
 5. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
 6. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
 
-IL Master Electrician license is legally required for most
-residential electrical work and is a real, verifiable credential.
-IBEW (International Brotherhood of Electrical Workers) is the major
-US electrical workers' union; local-chapter membership signals
-formal apprenticeship training. Only mention IBEW if the prospect
-actually belongs to a local.
+Master Electrician licensing is required by most US states for
+residential electrical work above a low threshold, but the exact
+name and structure of the license vary by state (Illinois uses
+"IL Master Electrician"; some states use "Journeyman vs Master,"
+others use "Class A/B/C electrician"). When surfacing this
+credential, **always interpolate from `prospect.state` rather
+than hard-coding "IL"** -- a prospect in Indiana or Missouri
+should not see their listing claim an Illinois license.
+
+IBEW (International Brotherhood of Electrical Workers) is the
+major US electrical workers' union; local-chapter membership
+signals formal apprenticeship training. Only mention IBEW with
+the actual local-chapter number from prospect data.
 
 NEVER fabricate licenses or union memberships. If the prospect
 JSON doesn't confirm Master Electrician status or specific IBEW
@@ -724,10 +766,14 @@ electrical operations targeting business clients.
 ### Color defaults
 
 If prospect provided brand colors, use them. If not:
-- Accent: **electric amber** (`#D97706`) -- electrical industry
-  caution/voltage color, accessible contrast on white (amber-600
-  level, not pure yellow which fails contrast checks)
-- Accent-dark: `#B45309` (darker amber for hover states)
+- Accent: **electric amber** (`#B45309`, amber-700) -- electrical
+  industry caution/voltage color, **WCAG AA-compliant** with
+  white button text (~5.8:1 contrast on `.nav-cta`, `.form-submit`,
+  `.cta-emergency` styles). The shallower amber-600 (`#D97706`)
+  fails AA at ~3.2:1 against white text on normal-size labels --
+  do not use it as the primary accent for buttons that contain
+  white text.
+- Accent-dark: `#92400E` (amber-800, hover state)
 - Secondary: navy (`#1F3A5F`) -- trust/professional signal for
   emergency CTAs and panel-upgrade CTAs
 - Background: white (light theme)
@@ -735,8 +781,12 @@ If prospect provided brand colors, use them. If not:
 The amber accent intentionally echoes the industry's electrical
 caution / breaker-label / voltage-warning palette without crossing
 into pure yellow (which has poor contrast for white text on
-yellow buttons). Distinct from plumber's red-orange and HVAC's
-blue, so each trade build has its own visual identity at a glance.
+yellow buttons). The specific amber-700 (`#B45309`) was chosen
+over amber-600 (`#D97706`) after contrast testing -- both visually
+read as "electrical caution" but only `#B45309` passes WCAG AA
+on white-text buttons. Distinct from plumber's red-orange and
+HVAC's blue, so each trade build has its own visual identity at
+a glance.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
 accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
