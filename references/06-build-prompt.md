@@ -183,10 +183,12 @@ PROSPECT_JSON. For plumbers, that is:
 
    **`_computed_hero_shape: "gradient"`** -- no photo. Background is
    a 135-degree linear gradient between `--accent` and `--accent-dark`,
-   white text, center-aligned. Hero image is NOT referenced. Useful
-   when the prospect's theme is minimal / clean and a photo would
-   feel cluttered, OR as a graceful fallback when no Unsplash result
-   was found and no Flux image was generated.
+   white text, center-aligned. Hero image is NOT referenced. The
+   harness selects this shape purely from `_computed_theme` (minimal
+   couples to gradient because the airy whitespace aesthetic would
+   feel cluttered by a photo). Do NOT override `_computed_hero_shape`
+   based on whether a hero image was generated -- shape selection is
+   the harness's responsibility, not yours.
    ```html
    <section class="dual-cta-hero hero-gradient">
      <div class="dual-cta-hero-inner">
@@ -197,9 +199,13 @@ PROSPECT_JSON. For plumbers, that is:
    </section>
    ```
 
-   If `_computed_hero_shape` is missing or names an unknown shape,
-   fall back to `fullbleed` and emit a build-log warning (indicates a
-   harness desync with 03-base-template.html).
+   If `_computed_hero_shape` is missing or names a shape not in the
+   three options above, fall back to `fullbleed`. The harness
+   validates the shape value before injecting it (see
+   `select_hero_shape()` in `build.py`), so encountering this case
+   in a generated site indicates a desync between
+   `THEME_TO_HERO_SHAPE` and the `.hero-*` CSS classes in
+   `03-base-template.html` -- flag it during build review.
 4. Coverage band (`.coverage-band`) -- slim utility strip immediately
    after the hero, single line:
    `Not sure if we cover your area?  Call <phone> ->`. Render ONLY if

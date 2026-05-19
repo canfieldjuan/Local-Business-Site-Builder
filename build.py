@@ -221,12 +221,25 @@ DEFAULT_HERO_SHAPE = "fullbleed"
 def select_hero_shape(prospect):
     # Map the prospect's _computed_theme to a hero shape. No new hash
     # slice -- the coupling is intentional so the visual language of
-    # the theme matches the hero layout. Falls back to fullbleed when
-    # the theme is unknown or _computed_theme is missing.
+    # the theme matches the hero layout. Falls back to DEFAULT_HERO_SHAPE
+    # when the theme is unknown, _computed_theme is missing, OR when the
+    # mapping yields a shape that isn't in KNOWN_HERO_SHAPES. The latter
+    # case indicates a desync between THEME_TO_HERO_SHAPE here and the
+    # `.hero-*` CSS classes in 03-base-template.html -- warn loudly so
+    # the operator notices the configuration drift.
     theme = prospect.get("_computed_theme")
     if not theme:
         return DEFAULT_HERO_SHAPE
-    return THEME_TO_HERO_SHAPE.get(theme, DEFAULT_HERO_SHAPE)
+    shape = THEME_TO_HERO_SHAPE.get(theme, DEFAULT_HERO_SHAPE)
+    if shape not in KNOWN_HERO_SHAPES:
+        print(
+            f"[!] select_hero_shape: theme {theme!r} maps to unknown shape "
+            f"{shape!r}; falling back to {DEFAULT_HERO_SHAPE!r}. Check "
+            f"THEME_TO_HERO_SHAPE in build.py vs the .hero-* classes in "
+            f"03-base-template.html."
+        )
+        return DEFAULT_HERO_SHAPE
+    return shape
 
 
 def _extract_trade_palette_variants(trade):
