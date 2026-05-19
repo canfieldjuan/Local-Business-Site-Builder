@@ -14,11 +14,14 @@ load_dotenv()
 
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY")
 
 if not OPENROUTER_API_KEY:
     print("Warning: OPENROUTER_API_KEY is not set. Please add it to your .env file.")
 if not RESEND_API_KEY:
     print("Warning: RESEND_API_KEY is not set. Please add it to your .env file.")
+if not UNSPLASH_ACCESS_KEY:
+    print("Info: UNSPLASH_ACCESS_KEY is not set; hero images will fall back to Flux generation. Add the key to .env for free Unsplash photo fetching.")
 
 # OpenAI-compatible client pointed at OpenRouter. None if no key was provided
 # so import-time doesn't crash; callers that need the client will fail loudly
