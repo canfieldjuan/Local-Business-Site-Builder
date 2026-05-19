@@ -139,7 +139,7 @@ applied `services-led` correctly.
 
 - **Same input-pipeline fix for `09-themes.md`.** The LLM
   currently does not read 09; theme typography silently falls
-  through to base-template defaults. Athoff's verification
+  through to base-template defaults. Althoff's verification
   build under `civic` rendered with Inter + Lora instead of
   Fjalla One + Noto Sans + Merriweather. Filed as a separate
   follow-up issue rather than fixed here -- the scope of slice

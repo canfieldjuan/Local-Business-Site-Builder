@@ -106,9 +106,9 @@ own rule handles emptiness.
 ## Fallback rule
 
 If `prospect._computed_section_order` is missing or names an
-ordering not catalogued above, fall back to `default` and emit a
-build-log warning (handled by `select_section_order()` in
-`build.py`). The harness validates the choice before injecting
-it, so encountering this case in a generated site indicates a
-desync between `KNOWN_SECTION_ORDERS` in `build.py` and the names
-in this file -- fix and rerun.
+ordering not catalogued above, fall back to `default`. The harness
+(`select_section_order()` in `build.py`) only ever picks from
+`KNOWN_SECTION_ORDERS`, so encountering an unknown name in a
+generated site indicates a desync between `KNOWN_SECTION_ORDERS`
+and the names in this file -- the fallback keeps the build
+buildable; the operator should reconcile the catalog and rerun.
