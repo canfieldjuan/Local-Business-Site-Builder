@@ -199,7 +199,7 @@ if a higher one exists.
 
 1. Third-party review score with platform name (`4.8 from 127 Google Reviews`)
 2. Years in business + location (`Serving [CITY] since [YEAR]`)
-3. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
+3. Licensing + insurance + ownership line -- render via `[TRUST_TRAILER]` from intro (composes only verified components; never the literal `Licensed, insured, family-owned` default)
 4. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
 
 NEVER fabricate review counts. If the prospect didn't provide a review
@@ -466,7 +466,7 @@ tiers if a higher one exists.
 1. Third-party review score with platform name (`4.8 from 127 Google Reviews`)
 2. Years in business + location (`Serving [CITY] since [YEAR]`)
 3. **EPA Section 608 / NATE certification** (`EPA-certified, NATE-certified`) -- HVAC-specific, real, verifiable credential
-4. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
+4. Licensing + insurance + ownership line -- render via `[TRUST_TRAILER]` from intro (composes only verified components; never the literal `Licensed, insured, family-owned` default)
 5. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
 
 EPA Section 608 certification is legally required in the US to
@@ -695,14 +695,18 @@ it because there is no longer-tenure story to tell yet.
 
 **Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
 
-New business without 24/7. The default phrasing leads on generic
-"Licensed Electrician" because most US states require some form
-of state or local electrician licensing. Upgrade to "Licensed
-Master Electrician" ONLY when `prospect.master_electrician_license`
-(or equivalent in `prospect.licenses` / `prospect.certifications`)
-is verified -- many states use the term "Master Electrician" for
-the highest residential tier, but not all electricians hold it,
-and claiming it falsely violates the SKILL.md fabrication guards.
+New business without 24/7. The headline carries the credential
+conditionally per the rule at the top of this file: render
+`Master Electrician Serving [CITY]` only when
+`prospect.master_electrician_license` (or equivalent in
+`prospect.licenses` / `prospect.certifications`) is verified,
+`Licensed Electrician Serving [CITY]` when only
+`prospect.licensed_and_insured` is true, and bare
+`Electrician Serving [CITY]` otherwise. Master/Master-licensed
+verification is strict -- many states use "Master Electrician"
+for the highest residential tier, but not all electricians hold
+it, and claiming it falsely violates the SKILL.md fabrication
+guards.
 
 - Headline (if Master credential verified per intro rule): `Master Electrician Serving [CITY]`
 - Headline (else if `prospect.licensed_and_insured` is true): `Licensed Electrician Serving [CITY]`
@@ -724,7 +728,7 @@ tiers if a higher one exists.
 2. Years in business + location (`Serving [CITY] since [YEAR]`)
 3. **State Master Electrician license** (`[STATE] Master Electrician licensed, #[LICENSE_NUMBER]` -- substitute `prospect.state` and the prospect's actual license number; do NOT hard-code Illinois or any other jurisdiction here) -- electrician-specific, real verifiable credential
 4. IBEW Local membership (if applicable, e.g. `IBEW Local [NUMBER] member` -- use the prospect's actual local chapter number) -- union signal indicates higher training
-5. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
+5. Licensing + insurance + ownership line -- render via `[TRUST_TRAILER]` from intro (composes only verified components; never the literal `Licensed, insured, family-owned` default)
 6. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
 
 Master Electrician licensing is common in US states for

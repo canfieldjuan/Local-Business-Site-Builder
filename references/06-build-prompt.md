@@ -311,20 +311,27 @@ Rules:
   promises, satisfaction guarantees, or other unverifiable claims. Pick
   in this priority order:
     1. `[TRUST_TRAILER]` -- the expansion defined at the top of
-       `07-industry-defaults.md`. It will produce something like
-       `Licensed, insured, family-owned.` or `Licensed, insured.`
-       composed only from the prospect fields that are actually
-       verified. Use this whenever the expansion yields at least
-       one component. Importantly, "locally owned" only appears
-       when `prospect.locally_owned` is true (or the family_owned
-       proxy from 07's expansion applies) -- it is NEVER derived
-       from `licensed_and_insured` alone.
-    2. `Family-owned since [established_year].` -- if
+       `07-industry-defaults.md`. Fires when the 07 expansion
+       yields a non-empty result. Produces a comma-separated
+       sentence with whatever components are verified: `Licensed,
+       insured.` (minimum, when only `licensed_and_insured` is
+       true), up through `Licensed, insured, family-owned, locally
+       owned.` when every flag is true. `locally owned` appears
+       only when `prospect.locally_owned` is explicitly true --
+       there is no implicit inference from `family_owned`, and it
+       is NEVER derived from `licensed_and_insured` alone.
+
+       **Exception (defers to option 2):** if
+       `prospect.licensed_and_insured` is NOT true AND
        `prospect.family_owned` is true AND
-       `prospect.established_year` is set AND option 1 produced
-       an empty trailer (rare; only when `licensed_and_insured`
-       is false but `family_owned` is true and you want the
-       "Family-owned since YYYY" framing specifically).
+       `prospect.established_year` is set, skip option 1 and
+       prefer option 2 -- the "since YYYY" framing is stronger
+       than the bare `family-owned.` component the trailer would
+       otherwise produce.
+    2. `Family-owned since [established_year].` -- fires per the
+       exception in option 1: when `licensed_and_insured` is not
+       true, `family_owned` is true, and `established_year` is
+       set.
     3. `Serving [SERVICE_AREA] since [established_year].` -- if
        `prospect.established_year` is set and the higher-priority
        options didn't fire.
