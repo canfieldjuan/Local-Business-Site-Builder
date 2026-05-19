@@ -32,6 +32,7 @@ from lib.deploy import deploy_to_vercel
 BUILD_PROMPT_PATH = "references/06-build-prompt.md"
 INDUSTRY_DEFAULTS_PATH = "references/07-industry-defaults.md"
 BASE_TEMPLATE_PATH = "references/03-base-template.html"
+THEMES_CATALOG_PATH = "references/09-themes.md"
 SECTION_ORDERS_PATH = "references/10-section-orders.md"
 EMAIL_PROMPT_PATH = "references/08-pitch-email-prompt.md"
 BUILD_OUTPUT_ROOT = os.path.join("outputs", "builds")
@@ -446,10 +447,12 @@ def generate_build_html(prospect):
         system_prompt = f.read()
     with open(INDUSTRY_DEFAULTS_PATH, "r") as f:
         industry_defaults = f.read()
-    with open(BASE_TEMPLATE_PATH, "r") as f:
-        base_template = f.read()
+    with open(THEMES_CATALOG_PATH, "r") as f:
+        themes_catalog = f.read()
     with open(SECTION_ORDERS_PATH, "r") as f:
         section_orders = f.read()
+    with open(BASE_TEMPLATE_PATH, "r") as f:
+        base_template = f.read()
 
     # Static block -- same bytes for every plumber/HVAC/electrician build.
     # Cache marker on the end of this lets consecutive builds within the
@@ -458,16 +461,18 @@ def generate_build_html(prospect):
     # prospect JSON: prompt caching is a prefix match, so any byte change
     # before the marker invalidates the cache for that breakpoint.
     #
-    # SECTION ORDERS is inlined here so the LLM can actually look up the
-    # named ordering in prospect._computed_section_order. Without this,
-    # 06's SECTION ARCHITECTURE pointer to 10-section-orders.md is a
-    # dangling reference -- a regression already observed during slice 3b
-    # verification (Althoff rendered default ordering despite
-    # _computed_section_order=services-led). The same input-pipeline gap
-    # exists for 09-themes.md and silently breaks theme typography;
-    # that's filed separately, not fixed here.
+    # THEMES and SECTION ORDERS are inlined so the LLM can actually look
+    # up _computed_theme and _computed_section_order in the catalogs.
+    # Without this inlining, 06's prose pointers to 09-themes.md and
+    # 10-section-orders.md are dangling references -- the LLM never sees
+    # the file contents. Slice 3b (PR #19) closed the gap for 10; this
+    # closes it for 09 (issue #20). The block order
+    # INDUSTRY_DEFAULTS -> THEMES -> SECTION_ORDERS -> BASE_TEMPLATE
+    # walks the LLM through trade guidance, then typography/layout
+    # personality, then section sequence, then the CSS framework.
     static_block = (
         f"INDUSTRY DEFAULTS:\n{industry_defaults}\n\n"
+        f"THEMES:\n{themes_catalog}\n\n"
         f"SECTION ORDERS:\n{section_orders}\n\n"
         f"BASE TEMPLATE:\n{base_template}"
     )

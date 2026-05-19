@@ -118,6 +118,9 @@ The caller will send a user message with this exact structure:
 INDUSTRY DEFAULTS:
 { ...07-industry-defaults.md contents... }
 
+THEMES:
+{ ...09-themes.md contents... }
+
 SECTION ORDERS:
 { ...10-section-orders.md contents... }
 
@@ -128,11 +131,16 @@ PROSPECT JSON:
 { ...json... }
 ```
 
-The first three blocks are cacheable static content; the prospect
-JSON varies per build and is sent uncached. Read `SECTION ORDERS`
-to resolve `prospect._computed_section_order` (one of `default`,
-`services-led`, `reviews-led`) to the matching named ordering, and
-render sections in that order. See SECTION ARCHITECTURE below.
+The first four blocks are cacheable static content; the prospect
+JSON varies per build and is sent uncached. Read `THEMES` to
+resolve `prospect._computed_theme` (one of `warm`, `civic`,
+`minimal`, `broadcast`, `editorial`, `brand-forward`) to the
+matching Google Fonts import + `:root` overrides + style notes,
+and apply those to the rendered HTML. Read `SECTION ORDERS` to
+resolve `prospect._computed_section_order` (one of `default`,
+`services-led`, `reviews-led`) to the matching named ordering,
+and render sections in that order. See THEME & TYPOGRAPHY and
+SECTION ARCHITECTURE below.
 
 Output: the complete HTML file.
 
@@ -548,14 +556,17 @@ HERO CHIP (eyebrow badge above the headline):
 The build harness (`build.py`) selects a theme deterministically per
 prospect and injects the choice as `prospect._computed_theme` before you
 see the prospect JSON. **Read `prospect._computed_theme` verbatim and
-apply the matching theme block from `references/09-themes.md`** -- do
-NOT pick the theme yourself, and do NOT second-guess the harness. Two
-builds of the same prospect must produce the same theme; that
+apply the matching theme block from the `THEMES:` section of the user
+message** (which contains the full `references/09-themes.md` catalog,
+inlined by the harness so you can look up the chosen theme directly).
+Do NOT pick the theme yourself, and do NOT second-guess the harness.
+Two builds of the same prospect must produce the same theme; that
 determinism is the harness's job, not yours.
 
 For each build:
 
-1. Locate the theme named by `prospect._computed_theme` in 09.
+1. Locate the theme named by `prospect._computed_theme` in the
+   inlined `THEMES:` section.
 2. Insert that theme's Google Fonts `<link>` tag in the document `<head>`.
 3. In the `:root` block, override `--font-display`, `--font-body`,
    `--font-serif`, and `--card-radius` with the values from that theme.
