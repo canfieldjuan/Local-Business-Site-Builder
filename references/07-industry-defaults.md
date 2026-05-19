@@ -211,12 +211,37 @@ Local plumbers compete against Roto-Rooter, Mr. Rooter, Benjamin Franklin,
 and similar national/franchise brands that dominate paid local-pack ads.
 The site should signal *local* without being explicit / defensive about it.
 
-Positive signals to include (when true):
-- "Family owned and operated"
-- "Local technicians, not call-center dispatchers"
-- "Upfront flat-rate pricing, no surprise fees"
-- "Owner answers the phone after hours"
-- Specific small geographic coverage area
+**Positive signals for the Why-Choose-Us section** (see Section order step 6).
+Each bullet has a gating rule -- a benefit card may render ONLY when the
+named prospect field is verified. The same fabrication-guard discipline
+that gates the hero subhead via `[TRUST_TRAILER]` and `[SERVICE_PROMISE]`
+applies to the benefits grid: never invent a verified-trust or
+service-promise card just to fill the 3rd slot.
+
+**Verified trust signals** (gated by existing `[TRUST_TRAILER]` fields):
+- "Family Owned & Operated" -- render only if `prospect.family_owned` is true.
+- "Locally Owned, Not a Franchise" -- render only if `prospect.locally_owned` is true. No implicit inference from `family_owned`.
+- "Licensed & Insured" -- render only if `prospect.licensed_and_insured` is true.
+
+**Verified service promises** (require a matching entry in `prospect.service_promises`):
+- "Upfront Flat-Rate Pricing" / "No Surprise Fees" -- requires `"Flat-rate pricing"`, `"Upfront pricing"`, or close equivalent in `service_promises`.
+- "Same-Day Service" -- requires `"Same-day service"` entry.
+- "Free Estimates" -- requires `"Free estimates"` entry.
+- "Owner Answers the Phone After Hours" -- specific business-practice claim; requires an explicit `service_promises` entry naming this. Never inferred from `has_24_7`.
+
+**Safe generic positioning** (true by definition for the skill's target audience -- rural small-town owner-operators with no franchise affiliation, owner-or-tight-crew operations):
+- "Local Service, Not a Call-Center Dispatch"
+- "Direct Line to the Service Tech, Not a Booking Agent"
+- "Serving [CITY] and [SERVICE_AREA]" -- substitute the verified `prospect.service_radius`.
+
+These three are safe to render without per-prospect verification because every skill target prospect IS a local independent by definition. Padding with these when verified trust + service-promise cards yield < 3 is honest framing, not fabrication.
+
+**Selection rule for the EXACTLY 3 cards** (see Section order step 6):
+1. Pick all verified-trust cards available.
+2. Pick all verified-service-promise cards available.
+3. Pad with safe-generic-positioning cards if the running count is < 3.
+4. Never fabricate a verified-trust or service-promise card. If the prospect data supports 0 verified cards, all 3 come from safe-generic. If it supports 2 verified, the 3rd comes from safe-generic.
+5. Consolidate overlapping verified-trust cards (e.g. family_owned + locally_owned) into a single card per 06's "consolidate overlapping claims" rule -- adjacent cards saying nearly the same thing weakens both.
 
 Do NOT explicitly name competitors ("better than Roto-Rooter"). Looks
 defensive and triggers brand-disparagement issues.
@@ -527,13 +552,39 @@ national/franchise brands that dominate paid local-pack ads. The
 site should signal *local* without being explicit / defensive
 about it.
 
-Positive signals to include (when true):
-- "Family owned and operated"
-- "EPA-certified technicians, not seasonal contractors"
-- "Upfront flat-rate pricing, no warranty-company runaround"
-- "Same crew installs the system AND comes back for the service call"
-- "Owner answers the phone after hours"
-- Specific small geographic coverage area
+**Positive signals for the Why-Choose-Us section** (see Section order step 6).
+Each bullet has a gating rule -- a benefit card may render ONLY when the
+named prospect field is verified. The same fabrication-guard discipline
+that gates the hero subhead via `[TRUST_TRAILER]` and `[SERVICE_PROMISE]`
+applies to the benefits grid: never invent a verified-trust or
+service-promise card just to fill the 3rd slot.
+
+**Verified trust signals** (gated by existing `[TRUST_TRAILER]` fields):
+- "Family Owned & Operated" -- render only if `prospect.family_owned` is true.
+- "Locally Owned, Not a Franchise" -- render only if `prospect.locally_owned` is true.
+- "Licensed & Insured" -- render only if `prospect.licensed_and_insured` is true.
+
+**Verified service promises** (require a matching entry in `prospect.service_promises`):
+- "Upfront Flat-Rate Pricing" / "No Warranty-Company Runaround" -- requires `"Flat-rate pricing"`, `"Upfront pricing"`, or close equivalent in `service_promises`.
+- "Same-Day Service" -- requires `"Same-day service"` entry.
+- "Free Estimates on System Replacement" -- requires `"Free estimates"` entry.
+- "Owner Answers the Phone After Hours" -- requires explicit `service_promises` entry; never inferred from `has_24_7`.
+
+**Verified trade credential** (gated by an explicit prospect field):
+- "EPA-Certified Technicians" -- render only if `prospect.epa_certified` is true. EPA Section 608 cert IS near-universal among professional HVAC techs (legally required for refrigerant handling), but "near-universal" is not "verified" -- the salesperson must confirm during intake before this card renders.
+
+**Safe generic positioning** (true by definition for the skill's target audience -- rural small-town owner-operators with no franchise affiliation, owner-or-tight-crew operations):
+- "Local Service, Not a Call-Center Dispatch"
+- "Same Crew Installs and Services" -- safe because target prospects are single-crew operations by definition, not the multi-team install/service-split of national franchises.
+- "Serving [CITY] and [SERVICE_AREA]" -- substitute the verified `prospect.service_radius`.
+
+**Selection rule for the EXACTLY 3 cards** (see Section order step 6):
+1. Pick all verified-trust cards available.
+2. Pick the verified-trade-credential card if `prospect.epa_certified` is true.
+3. Pick all verified-service-promise cards available.
+4. Pad with safe-generic-positioning cards if the running count is < 3.
+5. Never fabricate a verified-trust, service-promise, or credential card. If the prospect data supports 0 verified cards, all 3 come from safe-generic.
+6. Consolidate overlapping verified-trust cards per 06's "consolidate overlapping claims" rule.
 
 Do NOT explicitly name competitors ("better than ARS"). Same
 fabrication guards as plumber section -- looks defensive and
@@ -820,13 +871,40 @@ some electric on the side), and big-box-store installers (Home
 Depot's "Pro Referral" network for outlets and fans). The site
 should signal *local* without being explicit or defensive.
 
-Positive signals to include (when true):
-- "Family owned and operated"
-- "Master-licensed technicians, not handymen or hardware-store referrals"
-- "Upfront flat-rate pricing, no surprise breaker-by-breaker upcharges"
-- "Same crew installs the panel AND comes back when something needs attention"
-- "Owner answers the phone after hours"
-- Specific small geographic coverage area
+**Positive signals for the Why-Choose-Us section** (see Section order step 6).
+Each bullet has a gating rule -- a benefit card may render ONLY when the
+named prospect field is verified. The same fabrication-guard discipline
+that gates the hero subhead via `[TRUST_TRAILER]` and `[SERVICE_PROMISE]`
+applies to the benefits grid: never invent a verified-trust or
+service-promise card just to fill the 3rd slot.
+
+**Verified trust signals** (gated by existing `[TRUST_TRAILER]` fields):
+- "Family Owned & Operated" -- render only if `prospect.family_owned` is true.
+- "Locally Owned, Not a Franchise" -- render only if `prospect.locally_owned` is true.
+- "Licensed & Insured" -- render only if `prospect.licensed_and_insured` is true.
+
+**Verified service promises** (require a matching entry in `prospect.service_promises`):
+- "Upfront Flat-Rate Pricing" / "No Breaker-By-Breaker Upcharges" -- requires `"Flat-rate pricing"`, `"Upfront pricing"`, or close equivalent in `service_promises`.
+- "Same-Day Service" -- requires `"Same-day service"` entry.
+- "Free Estimates on Panel Upgrades / Generator Installs" -- requires `"Free estimates"` entry.
+- "Owner Answers the Phone After Hours" -- requires explicit `service_promises` entry; never inferred.
+
+**Verified trade credential** (gated by explicit prospect fields):
+- "Master Electrician on Staff" -- render only if `prospect.master_electrician_license` (or equivalent in `prospect.licenses` / `prospect.certifications`) is verified. Same gating rule as the Tier 3 headline upgrade in the credential-stripping section above. Not "near-universal" the way EPA-cert is for HVAC -- electrician licensing varies meaningfully by state and not every electrician holds Master; verify before rendering.
+- "IBEW Local [NUMBER] Member" -- render only if `prospect.ibew_local_number` is set. Substitute the actual local-chapter number.
+
+**Safe generic positioning** (true by definition for the skill's target audience -- rural small-town owner-operators with no franchise affiliation, owner-or-tight-crew operations):
+- "Local Service, Not a Big-Box Referral"
+- "Same Crew Installs and Services" -- safe because target prospects are single-crew operations by definition, not the multi-team workflow of national franchises or big-box "pro referral" networks.
+- "Serving [CITY] and [SERVICE_AREA]" -- substitute the verified `prospect.service_radius`.
+
+**Selection rule for the EXACTLY 3 cards** (see Section order step 6):
+1. Pick all verified-trust cards available.
+2. Pick verified-trade-credential cards available (Master Electrician, IBEW Local) -- but consolidate if both apply (one card naming the higher-trust credential).
+3. Pick all verified-service-promise cards available.
+4. Pad with safe-generic-positioning cards if the running count is < 3.
+5. Never fabricate a verified-trust, service-promise, or credential card. If the prospect data supports 0 verified cards, all 3 come from safe-generic.
+6. Consolidate overlapping verified-trust cards per 06's "consolidate overlapping claims" rule.
 
 Do NOT explicitly name competitors ("better than Mister Sparky").
 Same fabrication guards as plumber and HVAC sections.
