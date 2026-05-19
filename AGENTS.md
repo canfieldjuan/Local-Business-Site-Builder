@@ -157,11 +157,11 @@ in `build.py`), this section grows to match ATLAS's 3d.
 
 ## 3. Reviewer expectations (today: GitHub Copilot bot)
 
-Copilot reviews PRs automatically within ~1-2 minutes of `gh pr
-create` per the memory at
-`~/.claude/projects/.../memory/feedback_pr_review_workflow.md`.
-Builder addresses Copilot comments in fix-up commits on the same
-branch -- never force-push.
+Copilot reviews PRs automatically within ~1-2 minutes of
+`gh pr create`. Builder addresses Copilot comments in fix-up
+commits on the same branch -- never force-push. False-positive
+comments get a reply explaining the disagreement rather than a
+silent ignore.
 
 When the LBSB reviewer-session pattern lands (deferred), this
 section grows to mirror ATLAS section 2 (BLOCKER / MAJOR / NIT /
@@ -254,9 +254,6 @@ Things that should **never** appear in a PR:
   knowledge base (the fabrication guard's data source).
 - `references/09-themes.md` -- theme catalog with per-theme
   typography + hero-shape coupling.
-- `~/.claude/projects/.../memory/feedback_atlas_pr_ruleset.md` --
-  the persistent memory entry that captures this contract for
-  cross-session continuity.
 - `canfieldjuan/ATLAS/AGENTS.md` -- the canonical workflow doc
   this is ported from. Consult it for anything this file doesn't
   cover (reviewer-session bootstrap, package-specific guardrails,

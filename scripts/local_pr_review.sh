@@ -103,7 +103,13 @@ echo
 echo "changed files:"
 git diff --name-status "$base"...HEAD || true
 
-run_check "git diff --check" git diff --check
+# Whitespace / conflict-marker damage in the PROPOSED diff vs base,
+# not just the working tree. Plain `git diff --check` (no args) only
+# inspects worktree-vs-index, which is meaningless here because the
+# script enforces a clean worktree above -- the check would pass
+# even if the committed diff contained whitespace errors. Range form
+# inspects the commits this PR is actually adding.
+run_check "git diff --check $base..HEAD" git diff --check "$base..HEAD"
 
 plan_doc_count=$(
     git diff --name-only --diff-filter=AM "$base"...HEAD -- 'plans/PR-*.md' 2>/dev/null |
