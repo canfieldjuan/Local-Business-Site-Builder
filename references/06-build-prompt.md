@@ -174,12 +174,54 @@ PROSPECT_JSON. For plumbers, that is:
    </section>
    ```
 
-   Pick the 3 from INDUSTRY_DEFAULTS competitive-positioning bullets
-   that the prospect can credibly claim. Skip any that are clearly
-   false (e.g. "Family owned" only if prospect.family_owned is true).
-   When "Family owned" and "Licensed/insured/local" both apply,
-   CONSOLIDATE them into a single card -- they overlap and reading
-   two adjacent cards saying nearly the same thing weakens both.
+   **Gating rule (extends the `[TRUST_TRAILER]` / `[SERVICE_PROMISE]`
+   fabrication guard from 07's intro into the benefits grid).** Pick
+   each of the 3 cards from the trade's `Competitive positioning vs
+   national chains` -> `Positive signals` section in 07. Each bullet
+   there is classified into one of four categories with explicit
+   gating:
+
+   - **Verified trust signal** -- gated to a specific
+     `[TRUST_TRAILER]` component (`family_owned`, `locally_owned`,
+     `licensed_and_insured`).
+   - **Verified service promise** -- requires a matching entry in
+     `prospect.service_promises`. Never inferred from `has_24_7`,
+     prior tenure, or other adjacent fields.
+   - **Verified trade credential** -- gated to a trade-specific
+     prospect field (`prospect.epa_certified` for HVAC,
+     `prospect.master_electrician_license` for electrician).
+     Plumber has no equivalent.
+   - **Safe generic positioning** -- claims that are true by
+     definition for the skill's target audience (rural small-town
+     owner-operators, no franchise affiliation). Always renderable
+     without per-prospect verification.
+
+   **Selection order** -- apply per the trade-specific selection rule
+   block in 07 (each trade lists its own ordered selection rule).
+   The universal pattern is:
+
+   1. Verified-trust cards first (whichever components qualify).
+   2. Verified-trade-credential card (if applicable).
+   3. Verified-service-promise cards from `prospect.service_promises`.
+   4. Pad with safe-generic-positioning cards if (1)+(2)+(3) < 3.
+
+   **Never fabricate a verified card just to fill the 3rd slot.** If
+   the prospect data supports 0 verified cards, all 3 come from the
+   safe-generic-positioning list. If it supports 1 or 2, the
+   remainder come from safe-generic. The orphan-cell guard ("EXACTLY
+   3") is preserved without sacrificing the fabrication-guard.
+
+   **Consolidate overlapping claims.** When the verified-trust pass
+   would yield two cards saying nearly the same thing (e.g.
+   `Family Owned` + `Locally Owned`), consolidate into a single
+   card and pull one more from the next priority bucket.
+
+   **Anti-pattern from PR #6 review (do not repeat).** Earlier
+   builds rendered `Upfront Flat-Rate Pricing` as a benefit card
+   even though `prospect.service_promises: []`. That bullet now sits
+   in the verified-service-promise category and may not render
+   without a matching entry. The same discipline applies to every
+   business-practice claim in 07's positive-signals list.
 7. Customer Reviews -- branching logic based on what prospect data
    contains. Three possible renderings:
 
