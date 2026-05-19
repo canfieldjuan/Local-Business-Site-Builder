@@ -64,6 +64,24 @@ Brand display rule:
   prospect supplied `display_name` explicitly, use it verbatim and
   ignore this rule.
 
+Trade display rule:
+- `prospect.trade` is a lowercase JSON key (`"plumber"`, `"hvac"`,
+  `"electrician"`). When rendering the trade as a noun in copy
+  (headlines, subheads, form-trust, badges, anywhere the model
+  emits a human-readable phrase like "Licensed X Serving Y"), use
+  the `[TRADE_DISPLAY]` mapping below, never the raw JSON value:
+    - `plumber` -> `Plumber` (capitalized when sentence-leading or
+      a heading; lowercase `plumber` when mid-sentence)
+    - `hvac` -> `HVAC Contractor` (heading) / `HVAC contractor`
+      (mid-sentence); never bare `hvac` -- the acronym alone is
+      not a noun phrase
+    - `electrician` -> `Electrician` (heading) / `electrician`
+      (mid-sentence)
+- If a new trade key appears in `prospect.trade` without a
+  display mapping, prefer the title-case form of the key and
+  flag the gap in the build log so 07 and this rule can be
+  extended.
+
 Output rules:
 - Output ONLY raw HTML. No markdown code fences (no ```html, no ```),
   no preamble like "Here is the website", no trailing commentary. The
@@ -292,10 +310,40 @@ Rules:
   prospect JSON or in INDUSTRY_DEFAULTS. Never fabricate response-time
   promises, satisfaction guarantees, or other unverifiable claims. Pick
   in this priority order:
-    1. `Licensed, insured, and locally owned.` -- if prospect.licensed_and_insured is true
-    2. `Family-owned since [established_year].` -- if prospect.family_owned is true AND prospect.established_year is set
-    3. `Serving [SERVICE_AREA] since [established_year].` -- if established_year is set
-    4. `Licensed, insured [TRADE] serving [CITY].` -- always valid; substitute prospect.trade verbatim (e.g., "plumber", "HVAC contractor", "electrician"). Only fall through to this when 1-3 don't apply.
+    1. `[TRUST_TRAILER]` -- the expansion defined at the top of
+       `07-industry-defaults.md`. Fires when the 07 expansion
+       yields a non-empty result. Produces a comma-separated
+       sentence with whatever components are verified: `Licensed,
+       insured.` (minimum, when only `licensed_and_insured` is
+       true), up through `Licensed, insured, family-owned, locally
+       owned.` when every flag is true. `locally owned` appears
+       only when `prospect.locally_owned` is explicitly true --
+       there is no implicit inference from `family_owned`, and it
+       is NEVER derived from `licensed_and_insured` alone.
+
+       **Exception (defers to option 2):** if
+       `prospect.licensed_and_insured` is NOT true AND
+       `prospect.family_owned` is true AND
+       `prospect.established_year` is set, skip option 1 and
+       prefer option 2 -- the "since YYYY" framing is stronger
+       than the bare `family-owned.` component the trailer would
+       otherwise produce.
+    2. `Family-owned since [established_year].` -- fires per the
+       exception in option 1: when `licensed_and_insured` is not
+       true, `family_owned` is true, and `established_year` is
+       set.
+    3. `Serving [SERVICE_AREA] since [established_year].` -- if
+       `prospect.established_year` is set and the higher-priority
+       options didn't fire.
+    4. `[TRADE_DISPLAY] serving [CITY].` -- always-valid geographic
+       fallback. Use the `[TRADE_DISPLAY]` mapping defined under
+       the Trade display rule above, NEVER the raw `prospect.trade`
+       JSON value (e.g., for `prospect.trade == "hvac"` render
+       `HVAC contractor serving [CITY].`, not `hvac serving
+       [CITY].`). Do NOT prepend "Licensed, insured" here -- option 1
+       covers the licensed case; this option is what we fall to
+       when no credential or tenure claim is supported by prospect
+       data.
   Do NOT invent "We respond within X hours", "100% satisfaction", "free
   consultation", "no obligation", etc. unless they appear verbatim in
   the prospect JSON.
@@ -309,13 +357,21 @@ Rules:
 Plumbers default to urgency_type = "emergency". Render the dual CTA as:
 
 - PRIMARY (`.cta-emergency`): large click-to-call button. Phone number
-  visible in the button. Badge "Available 24/7" or "Same-Day Service"
-  per prospect.hours. `href="tel:[PROSPECT.phone with digits only]"`.
+  visible in the button. Badge logic, in this order:
+    1. If `prospect.has_24_7` is true: badge `Available 24/7`.
+    2. Else if `prospect.same_day_service` is true OR
+       `Same-day service` (or close equivalent) appears verbatim in
+       `prospect.service_promises`: badge `Same-Day Service`.
+    3. Otherwise: render no badge -- the phone number alone is the
+       button content.
+  `href="tel:[PROSPECT.phone with digits only]"`.
 - SECONDARY (`.cta-planned`): "Request Service" anchored to `#contact`.
 
-If prospect.has_24_7 is explicitly false, drop the "24/7" badge and
-use "Same-Day Service" or just the phone number. Never claim 24/7
-availability the prospect didn't promise.
+Never claim 24/7 availability the prospect didn't promise, and never
+default to a `Same-Day Service` badge without a verified
+`same_day_service` field or service_promises entry -- the
+[SERVICE_PROMISE] rule in `07-industry-defaults.md` applies to button
+badges as well as headlines.
 
 HERO CHIP (eyebrow badge above the headline):
 - When prospect.has_24_7 is true, render a `.hero-chip` with a
