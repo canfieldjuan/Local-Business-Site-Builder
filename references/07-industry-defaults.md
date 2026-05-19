@@ -317,14 +317,18 @@ When onboarding a new trade, start with the single-word trade name
 are off-target. Verify the top result is appropriate by inspecting
 the API response before committing the query.
 
-**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py)**
+**Path 2 -- Flux 2 hero prompt (consumed by `build.py`'s `build_hero_prompt()`)**
 
-`build.py`'s `build_hero_prompt()` (build.py:154) is a single
-trade-agnostic prompt string; it does **not** read this template.
-The text below is kept here as the trade-specific prompt we want
-to migrate to once `build_hero_prompt()` is refactored to read
-07 -- in the meantime treat it as documentation / manual-paste
-reference, not as the prompt the script currently sends to Flux.
+`build.py`'s `build_hero_prompt()` reads this template at runtime
+via `_extract_trade_hero_prompt(trade)`, substitutes `[CITY]` and
+`[STATE]` from the prospect JSON, and sends the result to the
+Flux 2 model. If the prospect's trade key doesn't match a
+`## TRADE:` section here (or the Path 2 fenced block is missing /
+unparseable), `build_hero_prompt()` falls back to a generic
+trade-agnostic prompt so the prospect still gets a hero -- just
+less trade-specific. Each trade's Path 2 block below is the
+single source of truth for that trade's Flux prompt; edit here,
+no code change required.
 
 ```
 Professional photorealistic hero image for a local plumbing business in
@@ -577,7 +581,7 @@ single-word trade name AND verify the top result has a human in
 it**; if not, escalate to a two-word query that names the person
 (`<trade> technician`, `<trade> contractor`, `<trade> worker`).
 
-**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py; see plumber section for context)**
+**Path 2 -- Flux 2 hero prompt (consumed by `build.py`'s `build_hero_prompt()`; see plumber section for the lookup mechanics)**
 
 ```
 Professional photorealistic hero image for a local HVAC contractor
@@ -852,7 +856,7 @@ panel-only shots without a person, escalate to
 `"electrician working"` or `"electrician technician"` per the
 multi-word fallback rule documented in the HVAC section above.
 
-**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py; see plumber section for context)**
+**Path 2 -- Flux 2 hero prompt (consumed by `build.py`'s `build_hero_prompt()`; see plumber section for the lookup mechanics)**
 
 ```
 Professional photorealistic hero image for a local electrician
