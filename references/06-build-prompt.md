@@ -138,12 +138,68 @@ PROSPECT_JSON. For plumbers, that is:
    phone number with `tel:` link, single CTA button anchored to `#contact`.
 2. Trust strip -- pick the highest-tier signal the prospect actually has
    per the INDUSTRY_DEFAULTS trust signal priority. NEVER fabricate.
-3. Hero (`hero-fullbleed` + `dual-cta-hero`) -- background image from
-   prospect.photos[].context=="hero" if present, otherwise the generated
-   hero image at `images/hero.<ext>`. Headline and subhead from one of
-   the INDUSTRY_DEFAULTS hero templates, populated with prospect values.
-   The hero subhead already names the service-area cities -- do NOT
-   repeat them in the coverage band below.
+3. Hero -- the harness picks one of three layout shapes per prospect
+   and injects the choice as `prospect._computed_hero_shape`. **Read
+   that field verbatim and apply the matching markup pattern below.**
+   The shape is coupled to `prospect._computed_theme` (e.g. editorial
+   theme implies split hero, minimal implies gradient) so the layout
+   personality matches the typography. Headline and subhead always
+   come from one of the INDUSTRY_DEFAULTS hero templates, populated
+   with prospect values; the hero subhead already names the
+   service-area cities, so do NOT repeat them in the coverage band
+   below.
+
+   **`_computed_hero_shape: "fullbleed"`** -- historical default. Full-
+   bleed photo with dark overlay, white text. The background image is
+   `prospect.photos[].context=="hero"` if present, otherwise the
+   generated hero at `images/hero.<ext>`.
+   ```html
+   <section class="dual-cta-hero hero-fullbleed" style="background-image: url('images/hero.jpg');">
+     <div class="dual-cta-hero-inner">
+       <h1 class="dual-cta-headline">...</h1>
+       <p class="dual-cta-sub">...</p>
+       <div class="dual-cta-row">...CTAs...</div>
+     </div>
+   </section>
+   ```
+
+   **`_computed_hero_shape: "split"`** -- two-column layout, copy on
+   the left, photo on the right (stacks vertically on screens <
+   900px, photo below copy). Dark text on light background -- no
+   overlay treatment. The photo URL goes on the `.hero-split-photo`
+   child element, NOT on the section.
+   ```html
+   <section class="dual-cta-hero hero-split">
+     <div class="hero-split-grid">
+       <div class="dual-cta-hero-inner">
+         <h1 class="dual-cta-headline">...</h1>
+         <p class="dual-cta-sub">...</p>
+         <div class="dual-cta-row">...CTAs...</div>
+       </div>
+       <div class="hero-split-photo" style="background-image: url('images/hero.jpg');"></div>
+     </div>
+   </section>
+   ```
+
+   **`_computed_hero_shape: "gradient"`** -- no photo. Background is
+   a 135-degree linear gradient between `--accent` and `--accent-dark`,
+   white text, center-aligned. Hero image is NOT referenced. Useful
+   when the prospect's theme is minimal / clean and a photo would
+   feel cluttered, OR as a graceful fallback when no Unsplash result
+   was found and no Flux image was generated.
+   ```html
+   <section class="dual-cta-hero hero-gradient">
+     <div class="dual-cta-hero-inner">
+       <h1 class="dual-cta-headline">...</h1>
+       <p class="dual-cta-sub">...</p>
+       <div class="dual-cta-row">...CTAs...</div>
+     </div>
+   </section>
+   ```
+
+   If `_computed_hero_shape` is missing or names an unknown shape,
+   fall back to `fullbleed` and emit a build-log warning (indicates a
+   harness desync with 03-base-template.html).
 4. Coverage band (`.coverage-band`) -- slim utility strip immediately
    after the hero, single line:
    `Not sure if we cover your area?  Call <phone> ->`. Render ONLY if
