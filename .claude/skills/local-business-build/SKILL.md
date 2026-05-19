@@ -1,6 +1,6 @@
 ---
 name: local-business-build
-description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Supported trades in v1: plumbers and HVAC contractors. For any other trade, complete the build with the closest-fit defaults (typically plumber) and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. The supported list grows as new `## TRADE: <name>` sections are added to `references/07-industry-defaults.md`. Claude does the HTML generation itself -- this skill does NOT call OpenRouter, Flux, or any LLM/image-generation API. It MAY call the Unsplash photo-library API for hero images when `UNSPLASH_ACCESS_KEY` is set (free, 50 req/hr); falls back to a placeholder with manual-fetch suggestions when absent. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
+description: Generate a single-page website mockup for a local-business prospect that has zero online presence. Use when the user pastes or points to a prospect JSON (business name, trade, city, phone, services, optional reviews), or asks to "build a site for [business]", "make a mockup for [trade] in [city]", or similar. Supported trades in v1: plumbers, HVAC contractors, and electricians. For any other trade, complete the build with the closest-fit defaults (typically plumber) and emit a "Trade mismatch" warning in the results report (defined in the Report Results section) so the user knows to manually review the copy. The supported list grows as new `## TRADE: <name>` sections are added to `references/07-industry-defaults.md`. Claude does the HTML generation itself -- this skill does NOT call OpenRouter, Flux, or any LLM/image-generation API. It MAY call the Unsplash photo-library API for hero images when `UNSPLASH_ACCESS_KEY` is set (free, 50 req/hr); falls back to a placeholder with manual-fetch suggestions when absent. Requires computer use / Bash access for file writes; without it, offer to print HTML inline. For redesigning an existing live website (URL-driven), use the `website-redesign` skill instead.
 ---
 
 # Local Business Site Builder
@@ -454,6 +454,7 @@ Each trade entry in 07 needs a `hero_search_query` field. Current coverage:
 |----------|--------------|---------|
 | plumber  | "plumbing"   | defined |
 | hvac     | "hvac technician" | defined (multi-word per the HVAC-specific exception in 07 -- single-word `"hvac"` returns commercial-system stock without humans; the `<trade> technician` form is the working fallback when single-word fails the human-at-work check) |
+| electrician | "electrician" | defined (single-word works here because "electrician" is itself a person noun, unlike the "hvac" acronym; verify the top result has a human in it on first build per the rule in 07, escalate to `"electrician working"` if not) |
 
 Add a row to this table and the corresponding field in 07 whenever a
 new trade is onboarded. The skill reads from 07 -- no changes needed
@@ -544,7 +545,7 @@ After writing the file, print a short summary to the user:
   outputs/builds/<slug>/images/hero.jpg"
 - Formspree endpoint status: "real endpoint set" / "placeholder — update
   before sharing"
-- **If `prospect.trade` is NOT in the supported list (currently `plumber`, `hvac`)**, ALSO print verbatim:
+- **If `prospect.trade` is NOT in the supported list (currently `plumber`, `hvac`, `electrician`)**, ALSO print verbatim:
   `[!] Trade mismatch: industry-defaults.md does not have a section for prospect.trade.`
   `    The build used the closest-fit trade defaults (typically plumber). Section`
   `    order, canonical service catalog, hero copy templates, trust signal priority,`

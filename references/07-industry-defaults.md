@@ -503,3 +503,243 @@ Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
 accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
 one badge). The secondary red-orange is reserved for emergency
 CTAs only -- not used as a general accent.
+
+---
+
+## TRADE: electrician
+
+### Buyer / urgency profile
+
+An electrician prospect's site visitor falls into two segments:
+
+1. **Emergency** (~50% of inbound traffic) -- sparking outlets,
+   smell of burning insulation, breaker that won't reset, partial
+   power loss, exposed wiring. Decision in hours rather than
+   minutes; the genuine fire-hazard cases call immediately, the
+   intermittent issues call within the day.
+2. **Planned** (~50%) -- panel upgrades (200A modernization),
+   generator installs, EV charger installs, new-construction
+   wiring, smart-home retrofits, ceiling fans, recessed lighting.
+   Decision in days to weeks. Form CTA acceptable.
+
+Compared to plumber (70% emergency) and HVAC (60% emergency),
+electrician has the LOWEST emergency proportion of the three
+home-services trades. Most electrical issues have workarounds
+(use a different outlet, flip the breaker) and the genuine
+emergencies are less time-sensitive than a burst pipe. However,
+the planned-work proportion is higher -- and planned electrical
+work includes high-ticket installs (panel upgrades $1.5-3K,
+generators $5-15K, EV chargers $1-3K, whole-home rewires $8-25K)
+that justify research time and form-submit-then-call patterns.
+
+### Canonical service catalog
+
+Use these as the default service list when the prospect's JSON
+doesn't specify, OR to augment a sparse list. Prospect-specified
+items always win.
+
+| Service                       | One-line description                                                |
+|-------------------------------|---------------------------------------------------------------------|
+| Electrical Panel Upgrade      | Service-entrance, breaker box, 100A-to-200A modernization.          |
+| Outlet & Switch Installation  | New circuits, GFCI/AFCI outlets, USB outlets, dimmer installs.      |
+| Lighting Installation         | Interior, exterior, recessed, undercabinet, landscape lighting.     |
+| Ceiling Fan Installation      | New fan, replacement, with-light upgrade, smart-fan retrofit.       |
+| Generator Installation        | Whole-home standby generators (Generac, Kohler) with auto transfer. |
+| EV Charger Installation       | Level 2 home charging (Tesla, ChargePoint, JuiceBox).               |
+| Smart Home Wiring             | Nest, Ring, smart switches, mesh wifi infrastructure.               |
+| Wiring Repair                 | Knob-and-tube replacement, aluminum repairs, troubleshooting.       |
+| Electrical Inspection         | Pre-purchase home inspection, code compliance, insurance reports.   |
+| Emergency Electrical Service  | 24/7 response for fire-hazard wiring and total power loss.          |
+
+The default 6 for an electrician build when the prospect list is
+sparse: Electrical Panel Upgrade, Outlet & Switch Installation,
+Lighting Installation, Ceiling Fan Installation, Generator
+Installation, Wiring Repair. EV chargers and smart-home wiring are
+higher-margin "growth" services for prospects targeting younger
+homeowners; include in the services array only when the prospect
+explicitly supports them.
+
+### Hero copy templates -- selection rule
+
+Apply this decision tree in order. The first matching tier wins.
+Substitute `[CITY]`, `[YEAR]`, `[YEARS]`, `[SERVICE_AREA]` from
+prospect values. NEVER fabricate a tenure value -- if the field is
+absent, fall through to the next tier.
+
+**Tier 1 -- Established (years_in_business >= 8):**
+
+This tier wins even when has_24_7 is true. An 8+ year track record
+beats "we're available 24/7" on credibility for electrical work
+because most homeowners are evaluating "can I trust this person
+with my house's wiring" more than "can they show up at 2am."
+
+- Headline: `[CITY]'s Trusted Electrician Since [YEAR]`
+- Subhead (any value of has_24_7): `[YEARS] years of residential and commercial electrical work across [SERVICE_AREA]. Licensed, insured, family-owned.`
+  (If has_24_7 is false, append: ` Free estimates on panel upgrades and generator installs.`)
+
+**Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
+
+Newer business that differentiates on 24/7 availability. Lead with
+it because there is no longer-tenure story to tell yet.
+
+- Headline: `Emergency Electrician in [CITY] -- 24/7 Response`
+- Subhead: `Same-day service for sparks, no-power, breaker failures, and fire-hazard wiring across [SERVICE_AREA]. Licensed, insured, locally owned.`
+
+**Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
+
+New business without 24/7. Lead on master-electrician licensing,
+not just generic "licensed" -- IL requires a Master Electrician
+license for residential work above a low threshold, and surfacing
+it differentiates a real electrician from a handyman.
+
+- Headline: `Licensed Master Electrician Serving [CITY]`
+- Subhead: `State-licensed residential and commercial electrical work. Fast response, upfront flat-rate pricing, no franchise dispatch fees padding your bill.`
+
+NEVER use mission-statement language ("We believe in honest
+electrical work", "Our mission is to..."). NEVER use "dedicated"
+or "committed to." NEVER drop the tier rule -- a Tier-1 established
+electrician with 24/7 service does NOT get the bare emergency
+headline; 24/7 moves to the subhead or hero chip, not the headline.
+
+### Trust signal priority
+
+Use the highest-tier signal the prospect actually has. Skip lower
+tiers if a higher one exists.
+
+1. Third-party review score with platform name (`4.8 from 87 Google Reviews`)
+2. Years in business + location (`Serving [CITY] since [YEAR]`)
+3. **State Master Electrician license** (`IL Master Electrician licensed, #ME-xxxxxx`) -- electrician-specific, real verifiable credential
+4. IBEW Local membership (if applicable, e.g. `IBEW Local 538 member`) -- union signal indicates higher training
+5. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
+6. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
+
+IL Master Electrician license is legally required for most
+residential electrical work and is a real, verifiable credential.
+IBEW (International Brotherhood of Electrical Workers) is the major
+US electrical workers' union; local-chapter membership signals
+formal apprenticeship training. Only mention IBEW if the prospect
+actually belongs to a local.
+
+NEVER fabricate licenses or union memberships. If the prospect
+JSON doesn't confirm Master Electrician status or specific IBEW
+local, drop those claims and fall back to the generic
+licensed/insured signal.
+
+### Competitive positioning vs national chains
+
+Local electricians compete against Mister Sparky, Mr. Electric,
+The Electric Connection, ARS / Service Experts (mostly HVAC, do
+some electric on the side), and big-box-store installers (Home
+Depot's "Pro Referral" network for outlets and fans). The site
+should signal *local* without being explicit or defensive.
+
+Positive signals to include (when true):
+- "Family owned and operated"
+- "Master-licensed technicians, not handymen or hardware-store referrals"
+- "Upfront flat-rate pricing, no surprise breaker-by-breaker upcharges"
+- "Same crew installs the panel AND comes back when something needs attention"
+- "Owner answers the phone after hours"
+- Specific small geographic coverage area
+
+Do NOT explicitly name competitors ("better than Mister Sparky").
+Same fabrication guards as plumber and HVAC sections.
+
+### Section order for single-page electrician site
+
+Same as plumber and HVAC (electrician sits under the
+`home-services` umbrella in `02-redesign-gen-prompt.md`'s industry
+section priority table). Render top to bottom:
+
+1. Sticky nav (business name + phone + CTA button)
+2. Trust strip (review score / years / master-license / licensed-insured row)
+3. Hero (full-bleed photo, headline, subhead, dual CTAs)
+4. Coverage band (`Not sure if we cover your area? Call <phone>`)
+5. Services grid (EXACTLY 6 services)
+6. Why choose us (EXACTLY 3 cards in `.section-band`)
+7. Customer Reviews (three-branch logic -- same as plumber/HVAC)
+8. Inline contact form
+9. Footer
+
+No electrician-specific section additions vs plumber or HVAC. The
+framework transfers as-is.
+
+### Hours defaults
+
+If prospect didn't specify, use:
+- Office: `Monday-Friday 7:00 AM - 6:00 PM, Saturday 8:00 AM - 2:00 PM`
+- Emergency: `24/7 emergency service available` (only if has_24_7 is true)
+- Note: electricians often DON'T do 24/7 even when their plumber
+  peers do. Less weather-driven demand than HVAC, fewer
+  burst-pipe-equivalent failures than plumbing. Don't default has_24_7
+  to true for electrician prospects without verification.
+
+### Service radius defaults
+
+If prospect didn't specify, use a 25-mile radius from the listed
+city. Phrase as: `Serving [CITY] and surrounding communities
+within 25 miles`. Same as HVAC.
+
+### Hero image source -- two paths
+
+**Path 1 -- Unsplash photo library (skill default)**
+
+```
+hero_search_query: "electrician"
+```
+
+Single-word query. **Unlike `"hvac"`** (acronym for systems, returns
+commercial-system stock), `"electrician"` is itself a person noun,
+so the single-word query typically returns tradesperson-at-work
+imagery (man in hard hat with wiring or panel, often a real
+electrician on a job). Verify the top result has a human in it
+before committing; if it returns power-line-tower-only or
+panel-only shots without a person, escalate to
+`"electrician working"` or `"electrician technician"` per the
+multi-word fallback rule documented in the HVAC section above.
+
+**Path 2 -- generated hero image (legacy build.py Flux path)**
+
+```
+Professional photorealistic hero image for a local electrician
+in [CITY]. Wide cinematic crop, natural light, depth of field.
+Subject: a master electrician in work uniform installing or
+inspecting a breaker panel, OR working on visible house wiring
+with hand tools. NO text, NO logos, NO faces clearly visible,
+no people wearing branded apparel from any specific company.
+```
+
+### Page set for MVP
+
+Single page (`index.html`) containing all sections above. Same
+constraint as plumber and HVAC. Multi-page (service subpages,
+individual installs as detail pages, blog) is v2.
+
+### Theme
+
+Electrician sites default to theme = `warm` (same as plumber and
+HVAC). Override to `civic` only if the prospect's brand is
+explicitly utility/clinical, OR to `minimal` for commercial
+electrical operations targeting business clients.
+
+### Color defaults
+
+If prospect provided brand colors, use them. If not:
+- Accent: **electric amber** (`#D97706`) -- electrical industry
+  caution/voltage color, accessible contrast on white (amber-600
+  level, not pure yellow which fails contrast checks)
+- Accent-dark: `#B45309` (darker amber for hover states)
+- Secondary: navy (`#1F3A5F`) -- trust/professional signal for
+  emergency CTAs and panel-upgrade CTAs
+- Background: white (light theme)
+
+The amber accent intentionally echoes the industry's electrical
+caution / breaker-label / voltage-warning palette without crossing
+into pure yellow (which has poor contrast for white text on
+yellow buttons). Distinct from plumber's red-orange and HVAC's
+blue, so each trade build has its own visual identity at a glance.
+
+Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
+accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
+one badge). The secondary navy is reserved for emergency CTAs and
+high-ticket-install CTAs (panel upgrade, generator) -- not used
+as a general accent.
