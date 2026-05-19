@@ -200,6 +200,84 @@ def _extract_trade_allowed_themes(trade):
     return valid or None
 
 
+def _extract_trade_palette_variants(trade):
+    # Parse 07's `## TRADE: <trade>` -> `### Color defaults` block and
+    # return a list of (accent, accent_dark) hex tuples from the
+    # `palette_variants:` fenced block. Returns None when the trade
+    # section, Color defaults subsection, or variants block can't be
+    # found -- the caller falls back to None and the LLM uses 07's
+    # documented "historical default" pair (first row of each block).
+    try:
+        with open(INDUSTRY_DEFAULTS_PATH, "r") as f:
+            content = f.read()
+    except OSError:
+        return None
+
+    section_match = re.search(
+        r"^## TRADE:\s*" + re.escape(trade) + r"\s*$(.*?)(?=^## TRADE:|\Z)",
+        content,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not section_match:
+        return None
+
+    color_block = re.search(
+        r"^### Color defaults\b(.*?)(?=^### |\Z)",
+        section_match.group(1),
+        re.MULTILINE | re.DOTALL,
+    )
+    if not color_block:
+        return None
+
+    fenced = re.search(
+        r"palette_variants:\s*\n(.*?)\n```",
+        color_block.group(1),
+        re.DOTALL,
+    )
+    if not fenced:
+        return None
+
+    variants = []
+    for line in fenced.group(1).splitlines():
+        pair = re.search(
+            r'accent:\s*"(#[0-9A-Fa-f]{6})",\s*accent_dark:\s*"(#[0-9A-Fa-f]{6})"',
+            line,
+        )
+        if pair:
+            variants.append((pair.group(1), pair.group(2)))
+    return variants or None
+
+
+def select_palette(prospect):
+    # Deterministic per-prospect palette selection. Same prospect JSON
+    # always yields the same palette. Returns a dict with 'accent' and
+    # 'accent_dark' hex codes, or None if the prospect already specified
+    # brand_colors (the LLM then uses those verbatim via 06's :root
+    # rule).
+    #
+    # Hash slice: select_theme() uses md5[:8]; select_palette() uses
+    # md5[8:16]. Same md5(business_name) but disjoint slices, so theme
+    # and palette selection are independent -- two prospects can share a
+    # theme but get different palettes, or vice versa.
+    if prospect.get("brand_colors"):
+        return None
+
+    trade = prospect.get("trade", "")
+    variants = _extract_trade_palette_variants(trade)
+    if not variants:
+        return None
+
+    business_name = (prospect.get("business_name") or "").strip().lower()
+    if not business_name:
+        accent, accent_dark = variants[0]
+    else:
+        digest = hashlib.md5(business_name.encode("utf-8")).hexdigest()
+        index = int(digest[8:16], 16) % len(variants)
+        accent, accent_dark = variants[index]
+
+    return {"accent": accent, "accent_dark": accent_dark}
+
+
 def select_theme(prospect):
     # Deterministic per-prospect theme selection. Same prospect JSON
     # always yields the same theme. Priority order (first match wins):
@@ -425,6 +503,14 @@ def main(prospect_json_path):
     # different themes from the trade's allowed_themes list in 07.
     prospect["_computed_theme"] = select_theme(prospect)
     print(f"[*] Theme: {prospect['_computed_theme']}")
+
+    # Deterministic palette selection. Independent from theme (different
+    # hash slice). When prospect.brand_colors is set this returns None
+    # and the LLM uses those colors verbatim per 06's :root rule.
+    palette = select_palette(prospect)
+    if palette:
+        prospect["_computed_palette"] = palette
+        print(f"[*] Palette: accent={palette['accent']} accent_dark={palette['accent_dark']}")
 
     # Hero image acquisition (unless skipped or prospect already provided one).
     # Path 1 (Unsplash) is tried first when UNSPLASH_ACCESS_KEY is set --
