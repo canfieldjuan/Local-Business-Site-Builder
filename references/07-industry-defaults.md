@@ -9,12 +9,14 @@ This is NOT a content database -- it's a defaults book. Prospect-specified
 values always win. Use these only to fill gaps.
 
 **Conditional trust clauses (applies to ALL trade sections below):**
-The Tier 1/2/3 subhead templates in each trade section include
-default trailing trust phrases such as "Licensed, insured,
-family-owned" or "[STATE] Master Electrician licensed." Treat
-these as **template defaults that get stripped when the
-underlying prospect field is missing**, not unconditional
-rendering instructions:
+The Tier 1/2/3 templates in each trade section -- **subheads,
+form-trust trailers, and any other template phrase carrying a
+credential, ownership, or service-promise claim** -- include
+default trailing phrases such as "Licensed, insured, family-owned"
+or "[STATE] Master Electrician licensed." Treat these as
+**template defaults that get stripped when the underlying
+prospect field is missing**, not unconditional rendering
+instructions:
 
 - Drop "Licensed, insured" if `prospect.licensed_and_insured`
   is not true.
@@ -36,6 +38,18 @@ stripping, end the subhead at the prior period. **Never
 fabricate a credential, ownership claim, or service promise the
 prospect data does not support** -- the SKILL.md fabrication
 guards override the defaults below.
+
+**Headline carve-out:** Tier 3 default headlines that read
+`Licensed [TRADE] Serving [CITY]` (`Licensed Plumber Serving
+[CITY]`, `Licensed HVAC Contractor Serving [CITY]`, `Licensed
+Electrician Serving [CITY]`) stand as written, because state or
+local licensing is near-universal for these trades and operating
+unlicensed is itself unusual. Downgrade to `[TRADE] Serving [CITY]`
+only when the prospect is positively known to be unlicensed --
+that's a red flag worth surfacing to the salesperson before
+publishing the site, not a routine template variant. The "Master
+Electrician" upgrade in the electrician section is the opposite
+direction and still requires verification per the rules above.
 
 ---
 
@@ -648,14 +662,23 @@ tiers if a higher one exists.
 5. Licensing + insurance + locally-owned line (`Licensed, insured, family-owned`)
 6. Service-radius coverage (`Serving [CITY] and surrounding areas within 25 miles`)
 
-Master Electrician licensing is required by most US states for
+Master Electrician licensing is common in US states for
 residential electrical work above a low threshold, but the exact
-name and structure of the license vary by state (Illinois uses
-"IL Master Electrician"; some states use "Journeyman vs Master,"
-others use "Class A/B/C electrician"). When surfacing this
-credential, **always interpolate from `prospect.state` rather
-than hard-coding "IL"** -- a prospect in Indiana or Missouri
-should not see their listing claim an Illinois license.
+name, structure, and even existence of a statewide license vary
+by state. Texas and Massachusetts run true statewide Master
+Electrician programs (`TX Master Electrician`, `MA Master
+Electrician #XXXX`); some states use "Journeyman vs Master,"
+others use "Class A/B/C electrician." A meaningful set of
+states -- **including Illinois, Indiana, Missouri, and Kansas
+among others** -- have **no statewide electrician license** and
+delegate licensing entirely to municipalities (Chicago,
+Springfield, etc. each issue separately). For prospects in those
+states, this trust signal does not apply at all -- skip it and
+fall to IBEW Local membership or the generic licensed/insured
+line. When the credential *does* apply, **always interpolate from
+`prospect.state` rather than hard-coding any specific
+jurisdiction** -- a prospect in Indiana or Missouri must not see
+their listing claim a Texas license.
 
 IBEW (International Brotherhood of Electrical Workers) is the
 major US electrical workers' union; local-chapter membership
@@ -768,11 +791,12 @@ electrical operations targeting business clients.
 If prospect provided brand colors, use them. If not:
 - Accent: **electric amber** (`#B45309`, amber-700) -- electrical
   industry caution/voltage color, **WCAG AA-compliant** with
-  white button text (~5.8:1 contrast on `.nav-cta`, `.form-submit`,
-  `.cta-emergency` styles). The shallower amber-600 (`#D97706`)
-  fails AA at ~3.2:1 against white text on normal-size labels --
-  do not use it as the primary accent for buttons that contain
-  white text.
+  white button text (~5.0:1 contrast on `.nav-cta`, `.form-submit`,
+  `.cta-emergency` styles -- comfortably above the 4.5:1 AA
+  threshold for normal-size text). The shallower amber-600
+  (`#D97706`) fails AA at ~3.4:1 against white text on normal-size
+  labels -- do not use it as the primary accent for buttons that
+  contain white text.
 - Accent-dark: `#92400E` (amber-800, hover state)
 - Secondary: navy (`#1F3A5F`) -- trust/professional signal for
   emergency CTAs and panel-upgrade CTAs

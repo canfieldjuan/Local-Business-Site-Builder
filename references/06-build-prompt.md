@@ -295,7 +295,7 @@ Rules:
     1. `Licensed, insured, and locally owned.` -- if prospect.licensed_and_insured is true
     2. `Family-owned since [established_year].` -- if prospect.family_owned is true AND prospect.established_year is set
     3. `Serving [SERVICE_AREA] since [established_year].` -- if established_year is set
-    4. `Licensed, insured [TRADE] serving [CITY].` -- always valid; substitute prospect.trade verbatim (e.g., "plumber", "HVAC contractor", "electrician"). Only fall through to this when 1-3 don't apply.
+    4. `[TRADE] serving [CITY].` -- always-valid geographic fallback; substitute prospect.trade verbatim (e.g., "plumber", "HVAC contractor", "electrician"). Only fall through to this when 1-3 don't apply. Do NOT prepend "Licensed, insured" here -- option 1 already covers the licensed case; this option is what we fall to when no credential or tenure claim is supported by prospect data. (See the conditional-trust-clauses rule at the top of `07-industry-defaults.md`.)
   Do NOT invent "We respond within X hours", "100% satisfaction", "free
   consultation", "no obligation", etc. unless they appear verbatim in
   the prospect JSON.
