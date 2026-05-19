@@ -569,6 +569,12 @@ def main(prospect_json_path):
     # output_dir/images/ so the deployed bundle is self-contained.
     if "--skip-image-gen" in sys.argv:
         print("[*] Skipping hero image generation due to --skip-image-gen flag.")
+    elif prospect.get("_computed_hero_shape") == "gradient":
+        # The harness selected a hero shape that renders no photo
+        # (see select_hero_shape() and references/09-themes.md). Skip
+        # the Unsplash/Flux fetch entirely -- the photo would only sit
+        # unused in the output dir and the deployed bundle. Issue #16.
+        print("[*] Skipping hero image generation: _computed_hero_shape='gradient' renders no photo.")
     else:
         existing_hero = any(
             p.get("context") in ("hero", "background")
