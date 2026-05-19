@@ -151,12 +151,52 @@ def slugify(name):
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "prospect"
 
 
+def _extract_trade_hero_prompt(trade):
+    # Read 07's `## TRADE: <trade>` section and return the Path 2 Flux
+    # prompt template (with [CITY] / [STATE] placeholders intact), or
+    # None if the section, the Path 2 marker, or the fenced code block
+    # can't be found. The caller substitutes placeholders and falls
+    # back to a generic prompt when this returns None.
+    try:
+        with open(INDUSTRY_DEFAULTS_PATH, "r") as f:
+            content = f.read()
+    except OSError:
+        return None
+
+    section_match = re.search(
+        r"^## TRADE:\s*" + re.escape(trade) + r"\s*$(.*?)(?=^## TRADE:|\Z)",
+        content,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not section_match:
+        return None
+
+    block_match = re.search(
+        r"\*\*Path 2[^*]*\*\*.*?```(?:\w+)?\s*\n(.*?)\n```",
+        section_match.group(1),
+        re.DOTALL,
+    )
+    if not block_match:
+        return None
+    return block_match.group(1).strip()
+
+
 def build_hero_prompt(prospect):
-    trade = prospect.get("trade", "local business")
+    trade = prospect.get("trade", "")
     city = prospect.get("city", "")
     state = prospect.get("state", "")
+
+    template = _extract_trade_hero_prompt(trade) if trade else None
+    if template:
+        return template.replace("[CITY]", city).replace("[STATE]", state)
+
+    # Trade-agnostic fallback. Fires when the prospect's trade key has
+    # no matching `## TRADE:` section in 07, or the Path 2 block is
+    # missing / unparseable. Keeps the build resilient if 07 is edited
+    # in a way that breaks the regex; the prospect still gets a hero.
+    display_trade = trade or "local business"
     return (
-        f"Professional photorealistic hero image for a local {trade} business in "
+        f"Professional photorealistic hero image for a local {display_trade} business in "
         f"{city}, {state}. Wide cinematic crop, golden-hour natural light, depth "
         f"of field. Subject: a clean service van in a residential driveway OR a "
         f"close-up of professional tools in use. NO text, NO logos, NO faces "
