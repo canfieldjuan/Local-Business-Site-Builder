@@ -246,49 +246,40 @@ These three are safe to render without per-prospect verification because every s
 Do NOT explicitly name competitors ("better than Roto-Rooter"). Looks
 defensive and triggers brand-disparagement issues.
 
-### Section order for single-page plumber site
+### Default service grid selection (plumber)
 
-This is the canonical section sequence. Render top to bottom in this order.
-See 06-build-prompt.md SECTION ARCHITECTURE for exact markup patterns.
+The services grid renders EXACTLY 6 cards (6 fills a 3-column desktop
+grid as 2 clean rows of 3; 7 or 8 leaves an orphan trailing cell).
+Prospect-specified services win. If the prospect supplied more than 6,
+pick the 6 with highest commercial value (emergency + replacement work
+over small-ticket fixture jobs). If the prospect list is sparse, fall
+back to the default 6 for a plumber:
 
-1. Sticky nav (business name + phone + CTA button)
-2. Trust strip (review score / years-in-business / licensed-insured row,
-   directly under nav, full-width band)
-3. Hero (full-bleed photo, headline, subhead, dual CTAs: call + form anchor).
-   Subhead names the service-area cities -- those cities are NOT repeated
-   anywhere else on the page.
-4. Coverage band (slim strip: "Not sure if we cover your area? Call <phone>")
-5. Services grid (3 columns desktop, 1 column mobile, EXACTLY 6 services).
-   6 fills the grid as 2 clean rows of 3 -- 7 or 8 leaves an orphan
-   trailing cell that reads as a layout bug. Prospect-specified
-   services win; if the prospect supplied more than 6, pick the 6
-   with highest commercial value (emergency + replacement work over
-   small-ticket fixture jobs). The default 6 for a plumber when the
-   prospect list is sparse: Emergency Leak Repair, Water Heater
-   Repair & Install, Drain Cleaning, Sewer Line Repair, Sump Pump
-   Service, Toilet Repair & Install. (Faucet & Fixture Replacement
-   and Garbage Disposal stay in the canonical catalog above for
-   prospects who explicitly ask for them.)
-6. Why choose us / differentiators (EXACTLY 3 cards, wrapped in
-   <section class="section-band">. Consolidate overlapping claims --
-   "family-owned" + "licensed/insured/local" become ONE card, not two.)
-7. Customer Reviews -- three branches (see 06-build-prompt.md for full
-   markup):
-   - 3+ entries in prospect.reviews -> card grid with quote cards plus
-     an inline summary row below (best treatment).
-   - prospect.reviews empty (or <3 entries) AND google_review_score is
-     set -> centered aggregate widget only (score + count + link).
-     Never render 1 or 2 cards.
-   - Both reviews empty AND google_review_score null -> OMIT the
-     entire section. No section header alone.
-8. Inline contact form (above footer, anchor target for the hero's form CTA)
-9. Footer (3-col: brand+phone+address | hours | service-area)
+- Emergency Leak Repair
+- Water Heater Repair & Install
+- Drain Cleaning
+- Sewer Line Repair
+- Sump Pump Service
+- Toilet Repair & Install
 
-NOTE: there is NO standalone "Service Area" section in this sequence.
-The hero subhead names the cities; the coverage band (step 4) carries
-the "not sure if we cover you" prompt. Rendering an additional service-
-area section duplicates both. The Service Area's textual function is
-absorbed into steps 3 and 4.
+Faucet & Fixture Replacement and Garbage Disposal stay in the canonical
+catalog above for prospects who explicitly ask for them, but don't make
+the default 6.
+
+### Service area handling (plumber)
+
+The hero subhead names the service-area cities and the coverage band
+asks "Not sure if we cover your area?". Together they cover the
+Service Area's textual function. **Do not render a standalone Service
+Area section** -- it duplicates both.
+
+### Section render order
+
+Render order comes from `prospect._computed_section_order` only. See
+`references/10-section-orders.md` for the three named orderings the
+harness picks among. The `default` ordering (trust-strip-first) suits
+plumbers given the emergency-CTA priority; `services-led` and
+`reviews-led` render correctly for plumbers too.
 
 Omit any section the prospect data can't fill honestly. A plumber site
 without a Google review score skips section 7 cleanly -- do not pad
@@ -600,24 +591,14 @@ Do NOT explicitly name competitors ("better than ARS"). Same
 fabrication guards as plumber section -- looks defensive and
 triggers brand-disparagement issues.
 
-### Section order for single-page HVAC site
+### Section render order (HVAC)
 
-Same as plumber (HVAC sits under the `home-services` umbrella in
-`02-redesign-gen-prompt.md`'s industry section priority table).
-Render top to bottom in this order:
-
-1. Sticky nav (business name + phone + CTA button)
-2. Trust strip (review score / years / EPA-cert / licensed-insured row)
-3. Hero (full-bleed photo, headline, subhead, dual CTAs: call + form anchor)
-4. Coverage band (`Not sure if we cover your area? Call <phone>`)
-5. Services grid (EXACTLY 6 services -- same orphan-cell logic as plumber)
-6. Why choose us (EXACTLY 3 cards in `.section-band`, `benefits-grid--three`)
-7. Customer Reviews (three-branch logic -- same as plumber's Branch A/B/C)
-8. Inline contact form
-9. Footer (3-col: brand+phone+address | hours | service-area)
-
-No HVAC-specific section additions vs plumber. The framework
-transfers as-is.
+Render order comes from `prospect._computed_section_order` only. See
+`references/10-section-orders.md` for the three named orderings the
+harness picks among. The `default` ordering (trust-strip-first) suits
+HVAC given the seasonal-emergency framing; `services-led` and
+`reviews-led` render correctly for HVAC too. No HVAC-specific
+ordering deviations vs plumber.
 
 ### Hours defaults
 
@@ -925,24 +906,12 @@ service-promise card just to fill the 3rd slot.
 Do NOT explicitly name competitors ("better than Mister Sparky").
 Same fabrication guards as plumber and HVAC sections.
 
-### Section order for single-page electrician site
+### Section render order (electrician)
 
-Same as plumber and HVAC (electrician sits under the
-`home-services` umbrella in `02-redesign-gen-prompt.md`'s industry
-section priority table). Render top to bottom:
-
-1. Sticky nav (business name + phone + CTA button)
-2. Trust strip (review score / years / master-license / licensed-insured row)
-3. Hero (full-bleed photo, headline, subhead, dual CTAs)
-4. Coverage band (`Not sure if we cover your area? Call <phone>`)
-5. Services grid (EXACTLY 6 services)
-6. Why choose us (EXACTLY 3 cards in `.section-band`)
-7. Customer Reviews (three-branch logic -- same as plumber/HVAC)
-8. Inline contact form
-9. Footer
-
-No electrician-specific section additions vs plumber or HVAC. The
-framework transfers as-is.
+Render order comes from `prospect._computed_section_order` only. See
+`references/10-section-orders.md` for the three named orderings the
+harness picks among. No electrician-specific ordering deviations vs
+plumber or HVAC.
 
 ### Hours defaults
 

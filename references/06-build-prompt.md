@@ -115,15 +115,24 @@ Output rules:
 The caller will send a user message with this exact structure:
 
 ```
-PROSPECT JSON:
-{ ...json... }
-
 INDUSTRY DEFAULTS:
 { ...07-industry-defaults.md contents... }
 
+SECTION ORDERS:
+{ ...10-section-orders.md contents... }
+
 BASE TEMPLATE:
 { ...03-base-template.html contents... }
+
+PROSPECT JSON:
+{ ...json... }
 ```
+
+The first three blocks are cacheable static content; the prospect
+JSON varies per build and is sent uncached. Read `SECTION ORDERS`
+to resolve `prospect._computed_section_order` (one of `default`,
+`services-led`, `reviews-led`) to the matching named ordering, and
+render sections in that order. See SECTION ARCHITECTURE below.
 
 Output: the complete HTML file.
 
@@ -131,13 +140,43 @@ Output: the complete HTML file.
 
 ## SECTION ARCHITECTURE
 
-Use the section order specified in INDUSTRY_DEFAULTS for the trade in
-PROSPECT_JSON. For plumbers, that is:
+**Render order comes from `prospect._computed_section_order` only.**
+The harness sets this field to one of `default`, `services-led`,
+or `reviews-led`. Read it, look up the matching named ordering in
+`references/10-section-orders.md`, and render sections in that
+order. The nav is always rendered first (it precedes position 1
+of every catalog ordering and is not listed there); every catalog
+ordering includes Footer as its last position. The catalog is the
+source of truth for which sections to render and in what order --
+do NOT add an extra Footer after applying the ordering, and do NOT
+omit any catalog position. Each trade in `07-industry-defaults.md`
+has a short `Section render order` subsection noting per-trade
+rationale, but those subsections defer to `10-section-orders.md`
+for the actual sequences -- `_computed_section_order` + 10's
+catalog is the only authoritative source.
+
+**The numbered list below is a per-section RULE INDEX, not a
+render sequence.** Each numbered entry describes one section's
+markup, conditional render behavior, and fabrication guards. **The
+numbers are stable identifiers, not the order to render in.** Do
+not interpret the default `1, 2, 3, ...` sequence as the rendering
+order -- use the numbers to find a section's rules quickly, use
+`_computed_section_order` to decide where to place it.
+
+If `_computed_section_order` is missing or names an unknown
+ordering, fall back to `default` (the harness validates the choice
+before injecting; this fallback shouldn't fire in practice).
+
+The per-section rules:
 
 1. Sticky nav -- business name (no logo unless prospect provided one),
    phone number with `tel:` link, single CTA button anchored to `#contact`.
-2. Trust strip -- pick the highest-tier signal the prospect actually has
-   per the INDUSTRY_DEFAULTS trust signal priority. NEVER fabricate.
+2. Trust strip (placement varies by `_computed_section_order`; the
+   `default` ordering places it directly under the nav, `services-led`
+   places it AFTER the services grid, `reviews-led` places it after
+   the services grid as well) -- pick the highest-tier signal the
+   prospect actually has per the INDUSTRY_DEFAULTS trust signal
+   priority. NEVER fabricate.
 3. Hero -- the harness picks one of three layout shapes per prospect
    and injects the choice as `prospect._computed_hero_shape`. **Read
    that field verbatim and apply the matching markup pattern below.**

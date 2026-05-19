@@ -32,6 +32,7 @@ from lib.deploy import deploy_to_vercel
 BUILD_PROMPT_PATH = "references/06-build-prompt.md"
 INDUSTRY_DEFAULTS_PATH = "references/07-industry-defaults.md"
 BASE_TEMPLATE_PATH = "references/03-base-template.html"
+SECTION_ORDERS_PATH = "references/10-section-orders.md"
 EMAIL_PROMPT_PATH = "references/08-pitch-email-prompt.md"
 BUILD_OUTPUT_ROOT = os.path.join("outputs", "builds")
 # Email drafts live in a SIBLING directory, never inside BUILD_OUTPUT_ROOT/<slug>/.
@@ -198,6 +199,38 @@ def _extract_trade_allowed_themes(trade):
     candidates = [t.strip() for t in line_match.group(1).split(",")]
     valid = [t for t in candidates if t in KNOWN_THEMES]
     return valid or None
+
+
+# Section-order catalog. Each name corresponds to an entry in
+# references/10-section-orders.md. The LLM reads
+# prospect._computed_section_order and renders sections in the order
+# documented under that catalog entry. Selection is purely an
+# ordering choice -- it never overrides per-section render rules
+# (reviews three-branch logic, coverage-band-needs-phone, etc.).
+# Kept ordered (list, not set) so the [0] element is the canonical
+# fallback when select_section_order() can't validate a pick.
+KNOWN_SECTION_ORDERS = (
+    "default",
+    "services-led",
+    "reviews-led",
+)
+DEFAULT_SECTION_ORDER = KNOWN_SECTION_ORDERS[0]
+
+
+def select_section_order(prospect):
+    # Deterministic per-prospect section-order selection. Same
+    # business_name -> same ordering. Hash slice md5[16:24] is
+    # disjoint from theme [:8] and palette [8:16] so the three
+    # variation axes (theme + palette + section order) are
+    # statistically independent. Falls back to DEFAULT_SECTION_ORDER
+    # when business_name is empty (rare; only on incomplete prospect
+    # JSON that already triggered a REQUIRED_FIELDS error earlier).
+    business_name = (prospect.get("business_name") or "").strip().lower()
+    if not business_name:
+        return DEFAULT_SECTION_ORDER
+    digest = hashlib.md5(business_name.encode("utf-8")).hexdigest()
+    index = int(digest[16:24], 16) % len(KNOWN_SECTION_ORDERS)
+    return KNOWN_SECTION_ORDERS[index]
 
 
 # Hero shape catalog. Each theme in 09-themes.md couples to one hero
@@ -415,6 +448,8 @@ def generate_build_html(prospect):
         industry_defaults = f.read()
     with open(BASE_TEMPLATE_PATH, "r") as f:
         base_template = f.read()
+    with open(SECTION_ORDERS_PATH, "r") as f:
+        section_orders = f.read()
 
     # Static block -- same bytes for every plumber/HVAC/electrician build.
     # Cache marker on the end of this lets consecutive builds within the
@@ -422,8 +457,18 @@ def generate_build_html(prospect):
     # price. The static block deliberately comes BEFORE the variable
     # prospect JSON: prompt caching is a prefix match, so any byte change
     # before the marker invalidates the cache for that breakpoint.
+    #
+    # SECTION ORDERS is inlined here so the LLM can actually look up the
+    # named ordering in prospect._computed_section_order. Without this,
+    # 06's SECTION ARCHITECTURE pointer to 10-section-orders.md is a
+    # dangling reference -- a regression already observed during slice 3b
+    # verification (Althoff rendered default ordering despite
+    # _computed_section_order=services-led). The same input-pipeline gap
+    # exists for 09-themes.md and silently breaks theme typography;
+    # that's filed separately, not fixed here.
     static_block = (
         f"INDUSTRY DEFAULTS:\n{industry_defaults}\n\n"
+        f"SECTION ORDERS:\n{section_orders}\n\n"
         f"BASE TEMPLATE:\n{base_template}"
     )
     prospect_block = f"PROSPECT JSON:\n{json.dumps(prospect, indent=2)}"
@@ -560,6 +605,14 @@ def main(prospect_json_path):
     # everything else gets the historical fullbleed.
     prospect["_computed_hero_shape"] = select_hero_shape(prospect)
     print(f"[*] Hero shape: {prospect['_computed_hero_shape']}")
+
+    # Section ordering. Independent of theme/palette/hero-shape --
+    # uses md5[16:24] slice so it varies even when two prospects
+    # collide on the earlier axes. The LLM reads
+    # _computed_section_order and renders sections in the order
+    # documented in references/10-section-orders.md for that name.
+    prospect["_computed_section_order"] = select_section_order(prospect)
+    print(f"[*] Section order: {prospect['_computed_section_order']}")
 
     # Hero image acquisition (unless skipped or prospect already provided one).
     # Path 1 (Unsplash) is tried first when UNSPLASH_ACCESS_KEY is set --
