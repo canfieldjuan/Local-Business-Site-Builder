@@ -17,6 +17,11 @@
   "licensed_and_insured": true,
   "has_24_7": true,
 
+  "_trust_fields_comment": "Optional fields that gate specific trust phrases per references/07-industry-defaults.md. Each defaults to absent -> rendered empty. Set to true only when verified for this prospect.",
+  "locally_owned": null,
+  "same_day_service": null,
+  "service_promises": [],
+
   "service_radius": "Effingham, Mattoon, Vandalia, and surrounding communities within 25 miles",
   "hours": "Mon-Fri 7am-6pm, Sat 8am-2pm, 24/7 emergency available",
 

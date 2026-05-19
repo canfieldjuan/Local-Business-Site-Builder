@@ -8,48 +8,110 @@ no current online presence.
 This is NOT a content database -- it's a defaults book. Prospect-specified
 values always win. Use these only to fill gaps.
 
-**Conditional trust clauses (applies to ALL trade sections below):**
-The Tier 1/2/3 templates in each trade section -- **subheads,
-form-trust trailers, and any other template phrase carrying a
-credential, ownership, or service-promise claim** -- include
-default trailing phrases such as "Licensed, insured, family-owned"
-or "[STATE] Master Electrician licensed." Treat these as
-**template defaults that get stripped when the underlying
-prospect field is missing**, not unconditional rendering
-instructions:
+## Template placeholders (governs ALL trade sections below)
 
-- Drop "Licensed, insured" if `prospect.licensed_and_insured`
-  is not true.
-- Drop "family-owned" if `prospect.family_owned` is not true.
-- Drop "locally owned" if no equivalent prospect field is set
-  (rarely captured in JSON; treat as "family_owned OR
-  locally-confirmed").
+The Tier 1/2/3 subheads, headlines, and `06-build-prompt.md`
+form-trust trailers below use named placeholders rather than
+literal trust phrases. Each placeholder has a strict
+prospect-data-driven expansion. If the underlying prospect field
+is missing or false, the placeholder renders as empty -- never
+as a default literal. This is how the skill keeps the
+fabrication-guard promise from `SKILL.md` at the template level
+instead of relying on the LLM to remember a separate rule.
+
+### `[TRUST_TRAILER]`
+
+Expand into a comma-separated, period-terminated sentence built
+ONLY from the components verified by prospect data, in this order:
+
+1. `Licensed, insured` -- if `prospect.licensed_and_insured` is
+   true.
+2. `family-owned` -- if `prospect.family_owned` is true.
+3. `locally owned` -- if and only if `prospect.locally_owned`
+   is explicitly true. There is no implicit inference from
+   `family_owned`, single-location, or any other field. Never
+   assert `locally owned` from `prospect.licensed_and_insured`.
+
+Join with commas; close with a single period. **If no component
+qualifies, render the placeholder as the empty string** -- the
+sentence preceding `[TRUST_TRAILER]` in the template becomes the
+subhead's natural end, no extra punctuation. Never substitute a
+generic fallback like "Licensed [TRADE] in [CITY]" -- that would
+be fabrication. Tenure/since-year claims are NOT part of
+[TRUST_TRAILER]; they live in the headline (`[CITY]'s Trusted
+[TRADE] Since [YEAR]`) and in form-trust options 2 and 3 in
+`06-build-prompt.md`, not in the comma-separated trailer.
+
+Examples:
+- `licensed_and_insured: true, family_owned: true`
+  -> `Licensed, insured, family-owned.`
+- `licensed_and_insured: true` only
+  -> `Licensed, insured.`
+- No verified components -> placeholder renders empty; nothing
+  appended to the prior sentence.
+
+### `[SERVICE_PROMISE]`
+
+Expand into the verified service promises from
+`prospect.service_promises` (an array of short strings such as
+`["Free estimates", "Same-day repair", "Flat-rate pricing"]`),
+joined with periods, terminated with a period.
+
+If `prospect.service_promises` is absent, empty, or null, render
+the empty string. **Never default-render "Free estimates",
+"Same-day service", "24/7 response", "upfront pricing",
+"flat-rate pricing", or "no franchise fees" -- those are
+operational claims about a specific prospect's business
+practices, not generic trade defaults**. The salesperson supplies
+verified promises in the prospect JSON; this skill does not
+invent them.
+
+### `[YEARS]` and `since [YEAR]` (separate tenure placeholders)
+
+- `[YEARS] years` substitutes `prospect.years_in_business`
+  directly. Drop the clause if that field is null.
+- `since [YEAR]` substitutes `prospect.established_year`. Drop
+  the clause if that field is null.
+
+These are **independent**. A prospect with verified
+`years_in_business: 12` but no `established_year` can still
+truthfully claim "12 years of ..." in the subhead. Do not strip
+one because the other is missing.
+
+### Credential-stripping (Master / specialty licenses)
+
 - Drop "Master Electrician" / "Master-licensed" / similar
   trade-specific certifications if the corresponding
-  `prospect.licenses` / `prospect.certifications` / explicit
-  flag is not set. Fall back to the generic "Licensed" phrasing.
-- Drop any "since [YEAR]" / "[YEARS] years" clause if
-  `prospect.established_year` is null.
-- Drop "Free estimates" / "Same-day service" / equivalent
-  service-promise phrases unless verbatim in prospect data.
+  `prospect.master_electrician_license` /
+  `prospect.certifications` / explicit flag is not verified.
+- **Falling back to the generic "Licensed" phrasing still
+  requires `prospect.licensed_and_insured` to be true.** If the
+  Master credential is unverified AND `licensed_and_insured` is
+  not true, drop the credential entirely (no generic "Licensed"
+  default). The Tier 3 headline rule below handles the
+  no-credential case.
 
-If the trailing trust sentence collapses to empty after
-stripping, end the subhead at the prior period. **Never
-fabricate a credential, ownership claim, or service promise the
-prospect data does not support** -- the SKILL.md fabrication
-guards override the defaults below.
+### Headline: `Licensed [TRADE] Serving [CITY]` is conditional
 
-**Headline carve-out:** Tier 3 default headlines that read
-`Licensed [TRADE] Serving [CITY]` (`Licensed Plumber Serving
-[CITY]`, `Licensed HVAC Contractor Serving [CITY]`, `Licensed
-Electrician Serving [CITY]`) stand as written, because state or
-local licensing is near-universal for these trades and operating
-unlicensed is itself unusual. Downgrade to `[TRADE] Serving [CITY]`
-only when the prospect is positively known to be unlicensed --
-that's a red flag worth surfacing to the salesperson before
-publishing the site, not a routine template variant. The "Master
-Electrician" upgrade in the electrician section is the opposite
-direction and still requires verification per the rules above.
+Tier 3 default headlines that read `Licensed [TRADE] Serving
+[CITY]` (`Licensed Plumber Serving [CITY]`, `Licensed HVAC
+Contractor Serving [CITY]`, `Licensed Electrician Serving [CITY]`)
+render the leading "Licensed " word **only when
+`prospect.licensed_and_insured` is true**. Otherwise the headline
+falls back to `[TRADE_DISPLAY] Serving [CITY]` -- no credential
+claim. `[TRADE_DISPLAY]` is the human-readable form (`Plumber`,
+`HVAC Contractor`, `Electrician`), not the lowercase JSON key.
+
+Operating unlicensed is itself unusual for these trades, and the
+salesperson should surface a missing `licensed_and_insured` flag
+during prospect intake -- but until that flag is verified, the
+generated site will not assert the credential.
+
+**Bottom line:** Never fabricate a credential, ownership claim,
+or service promise the prospect data does not support. The
+SKILL.md fabrication guards override the defaults below; the
+placeholders here implement those guards at the template level
+so the LLM doesn't have to remember them every time.
 
 ---
 
@@ -105,8 +167,7 @@ is a losing position for a local plumber; trying to out-trust them on
 locality and tenure is winnable.
 
 - Headline: `[CITY]'s Trusted Plumber Since [YEAR]`
-- Subhead (any value of has_24_7): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. Licensed, insured, family-owned.`
-  (If has_24_7 is false, append: ` Free estimates.`)
+- Subhead (any value of has_24_7): `[YEARS] years of plumbing repair, replacement, and installation across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
 
@@ -114,15 +175,16 @@ Newer business that still differentiates on 24/7 availability. Lead
 with it because there is no longer-tenure story to tell yet.
 
 - Headline: `Emergency Plumber in [CITY] -- We Answer 24/7`
-- Subhead: `Same-day service across [SERVICE_AREA]. Licensed, insured, locally owned.`
+- Subhead: `Plumbing service across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
 
 New business without 24/7 service. Lead on credentials, pricing
 transparency, and the anti-franchise angle.
 
-- Headline: `Licensed Plumber Serving [CITY]`
-- Subhead: `Fast response, upfront pricing, no franchise fees padding your bill.`
+- Headline (if `prospect.licensed_and_insured` is true): `Licensed Plumber Serving [CITY]`
+- Headline (otherwise): `Plumber Serving [CITY]`
+- Subhead: `Local plumbing service across [SERVICE_AREA]. [SERVICE_PROMISE]`
 
 NEVER use mission-statement language ("We believe in honest plumbing",
 "Our mission is to..."). NEVER use "dedicated" or "committed to."
@@ -255,10 +317,14 @@ When onboarding a new trade, start with the single-word trade name
 are off-target. Verify the top result is appropriate by inspecting
 the API response before committing the query.
 
-**Path 2 -- generated hero image (legacy build.py path via Flux 2)**
+**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py)**
 
-For `build.py` runs with `UNSPLASH_ACCESS_KEY` unset, the existing
-Flux 2 image-generation prompt remains. Default hero prompt template:
+`build.py`'s `build_hero_prompt()` (build.py:154) is a single
+trade-agnostic prompt string; it does **not** read this template.
+The text below is kept here as the trade-specific prompt we want
+to migrate to once `build_hero_prompt()` is refactored to read
+07 -- in the meantime treat it as documentation / manual-paste
+reference, not as the prompt the script currently sends to Flux.
 
 ```
 Professional photorealistic hero image for a local plumbing business in
@@ -367,8 +433,7 @@ the headline (see 06-build-prompt.md HERO CHIP rule) -- do NOT
 duplicate it in the subhead.
 
 - Headline: `[CITY]'s Trusted HVAC Since [YEAR]`
-- Subhead (any value of has_24_7): `[YEARS] years of heating, cooling, and indoor-air comfort across [SERVICE_AREA]. Licensed, insured, family-owned.`
-  (If has_24_7 is false, append: ` Free estimates on system replacements.`)
+- Subhead (any value of has_24_7): `[YEARS] years of heating, cooling, and indoor-air comfort across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
 
@@ -376,15 +441,16 @@ Newer business that still differentiates on 24/7 availability. Lead
 with it because there is no longer-tenure story to tell yet.
 
 - Headline: `Emergency HVAC in [CITY] -- 24/7 No-Heat & No-AC Service`
-- Subhead: `Same-day repair for furnace, AC, and heat pump failures across [SERVICE_AREA]. Licensed, insured, locally owned.`
+- Subhead: `Repair for furnace, AC, and heat pump failures across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
 
 New business without 24/7. Lead on credentials, certifications,
 and the anti-franchise angle.
 
-- Headline: `Licensed HVAC Contractor Serving [CITY]`
-- Subhead: `EPA-certified heating, cooling, and indoor-air work. Fast response, upfront pricing, no franchise dispatch fees padding your bill.`
+- Headline (if `prospect.licensed_and_insured` is true): `Licensed HVAC Contractor Serving [CITY]`
+- Headline (otherwise): `HVAC Contractor Serving [CITY]`
+- Subhead: `Local heating, cooling, and indoor-air service across [SERVICE_AREA]. [SERVICE_PROMISE]`
 
 NEVER use mission-statement language ("We believe in honest HVAC",
 "Our mission is to..."). NEVER use "dedicated" or "committed to."
@@ -496,7 +562,7 @@ single-word trade name AND verify the top result has a human in
 it**; if not, escalate to a two-word query that names the person
 (`<trade> technician`, `<trade> contractor`, `<trade> worker`).
 
-**Path 2 -- generated hero image (legacy build.py Flux path)**
+**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py; see plumber section for context)**
 
 ```
 Professional photorealistic hero image for a local HVAC contractor
@@ -617,8 +683,7 @@ because most homeowners are evaluating "can I trust this person
 with my house's wiring" more than "can they show up at 2am."
 
 - Headline: `[CITY]'s Trusted Electrician Since [YEAR]`
-- Subhead (any value of has_24_7): `[YEARS] years of residential and commercial electrical work across [SERVICE_AREA]. Licensed, insured, family-owned.`
-  (If has_24_7 is false, append: ` Free estimates on panel upgrades and generator installs.`)
+- Subhead (any value of has_24_7): `[YEARS] years of residential and commercial electrical work across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 2 -- Emergency (years_in_business < 8 AND has_24_7 true):**
 
@@ -626,7 +691,7 @@ Newer business that differentiates on 24/7 availability. Lead with
 it because there is no longer-tenure story to tell yet.
 
 - Headline: `Emergency Electrician in [CITY] -- 24/7 Response`
-- Subhead: `Same-day service for sparks, no-power, breaker failures, and fire-hazard wiring across [SERVICE_AREA]. Licensed, insured, locally owned.`
+- Subhead: `Service for sparks, no-power, breaker failures, and fire-hazard wiring across [SERVICE_AREA]. [TRUST_TRAILER] [SERVICE_PROMISE]`
 
 **Tier 3 -- Local (years_in_business < 8 AND has_24_7 false/absent):**
 
@@ -639,10 +704,10 @@ is verified -- many states use the term "Master Electrician" for
 the highest residential tier, but not all electricians hold it,
 and claiming it falsely violates the SKILL.md fabrication guards.
 
-- Headline (default): `Licensed Electrician Serving [CITY]`
-- Headline (upgrade if Master license verified): `Licensed Master Electrician Serving [CITY]`
-- Subhead: `Residential and commercial electrical work. Fast response, upfront flat-rate pricing, no franchise dispatch fees padding your bill.`
-  (Append ` Master-electrician licensed.` only if the Master credential is verified per the conditional-trust-clauses rule in the intro.)
+- Headline (if Master credential verified per intro rule): `Master Electrician Serving [CITY]`
+- Headline (else if `prospect.licensed_and_insured` is true): `Licensed Electrician Serving [CITY]`
+- Headline (otherwise): `Electrician Serving [CITY]`
+- Subhead: `Local electrical service across [SERVICE_AREA]. [SERVICE_PROMISE]`
 
 NEVER use mission-statement language ("We believe in honest
 electrical work", "Our mission is to..."). NEVER use "dedicated"
@@ -762,7 +827,7 @@ panel-only shots without a person, escalate to
 `"electrician working"` or `"electrician technician"` per the
 multi-word fallback rule documented in the HVAC section above.
 
-**Path 2 -- generated hero image (legacy build.py Flux path)**
+**Path 2 -- reference Flux 2 hero prompt (NOT currently wired into build.py; see plumber section for context)**
 
 ```
 Professional photorealistic hero image for a local electrician
