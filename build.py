@@ -20,7 +20,7 @@ import json
 from datetime import date
 
 from lib.clients import openai_client as client, GENERATION_MODEL
-from lib.images import generate_image_openrouter
+from lib.images import fetch_unsplash_hero, generate_image_openrouter
 from lib.deploy import deploy_to_vercel
 # lib.email.send_pitch_email is intentionally NOT imported here. The
 # from-scratch build flow uses the manual email_draft.md workflow
@@ -281,7 +281,12 @@ def main(prospect_json_path):
     print(f"[*] Building {prospect['business_name']} ({prospect['trade']}, {prospect['city']}, {prospect['state']})")
     print(f"[*] Output: {output_dir}/")
 
-    # Hero image generation (unless skipped or prospect already provided one).
+    # Hero image acquisition (unless skipped or prospect already provided one).
+    # Path 1 (Unsplash) is tried first when UNSPLASH_ACCESS_KEY is set --
+    # it returns real photography for free. Path 2 (Flux via OpenRouter)
+    # is the paid fallback when Unsplash has no key, no results, or
+    # otherwise fails. Both paths mirror the image locally to
+    # output_dir/images/ so the deployed bundle is self-contained.
     if "--skip-image-gen" in sys.argv:
         print("[*] Skipping hero image generation due to --skip-image-gen flag.")
     else:
@@ -290,15 +295,30 @@ def main(prospect_json_path):
             for p in prospect.get("photos", []) if isinstance(p, dict)
         )
         if not existing_hero:
-            img_prompt = build_hero_prompt(prospect)
-            print(f"[*] Hero prompt: {img_prompt[:120]}...")
-            generated_url = generate_image_openrouter(img_prompt, output_dir=output_dir)
-            if generated_url:
+            trade = prospect.get("trade", "")
+            unsplash_hero = fetch_unsplash_hero(trade, output_dir)
+            if unsplash_hero:
+                print(f"[*] Unsplash credit: {unsplash_hero['credit_name']} ({unsplash_hero['credit_url']})")
                 prospect.setdefault("photos", []).append({
-                    "url": generated_url,
-                    "alt": f"Modern hero image for {prospect['business_name']}",
-                    "context": "hero"
+                    "url": unsplash_hero["url"],
+                    "alt": f"Hero image for {prospect['business_name']}",
+                    "context": "hero",
+                    "credit_name": unsplash_hero["credit_name"],
+                    "credit_url": unsplash_hero["credit_url"],
+                    "photo_id": unsplash_hero["photo_id"],
+                    "source": "unsplash",
                 })
+            else:
+                img_prompt = build_hero_prompt(prospect)
+                print(f"[*] Hero prompt: {img_prompt[:120]}...")
+                generated_url = generate_image_openrouter(img_prompt, output_dir=output_dir)
+                if generated_url:
+                    prospect.setdefault("photos", []).append({
+                        "url": generated_url,
+                        "alt": f"Modern hero image for {prospect['business_name']}",
+                        "context": "hero",
+                        "source": "flux",
+                    })
 
     html = generate_build_html(prospect)
 

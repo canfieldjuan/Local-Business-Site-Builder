@@ -282,11 +282,16 @@ Phrase as: `Serving [CITY] and surrounding communities within 20 miles`.
 
 ### Hero image source -- two paths
 
-**Path 1 -- Unsplash photo library (skill default; build.py-compatible)**
+**Path 1 -- Unsplash photo library (preferred; consumed by `build.py`'s `fetch_unsplash_hero()` and the SKILL bash workflow)**
 
-The `local-business-build` Claude Code skill (and any future
-Unsplash-aware build pipeline) fetches a hero from Unsplash using a
-trade-specific search query. The skill reads this field per-trade:
+When `UNSPLASH_ACCESS_KEY` is set, `build.py` and the
+`local-business-build` Claude Code skill both fetch a hero from
+Unsplash using the trade-specific search query below. Free, fast,
+real photography. `build.py` falls through to Path 2 (Flux) only
+when the key is missing, the API returns no results, or the
+network call fails. The skill workflow falls through to the
+manual placeholder fallback documented in SKILL.md under the
+same conditions. Both consumers read this field per-trade:
 
 ```
 hero_search_query: "plumbing"
@@ -559,7 +564,7 @@ time per call.
 
 ### Hero image source -- two paths
 
-**Path 1 -- Unsplash photo library (skill default)**
+**Path 1 -- Unsplash photo library (preferred; consumed by `build.py`'s `fetch_unsplash_hero()` and the SKILL bash workflow; see plumber section for path details)**
 
 ```
 hero_search_query: "hvac technician"
@@ -840,7 +845,7 @@ within 25 miles`. Same as HVAC.
 
 ### Hero image source -- two paths
 
-**Path 1 -- Unsplash photo library (skill default)**
+**Path 1 -- Unsplash photo library (preferred; consumed by `build.py`'s `fetch_unsplash_hero()` and the SKILL bash workflow; see plumber section for path details)**
 
 ```
 hero_search_query: "electrician"
