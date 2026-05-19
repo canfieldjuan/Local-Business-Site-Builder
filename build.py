@@ -200,6 +200,48 @@ def _extract_trade_allowed_themes(trade):
     return valid or None
 
 
+# Hero shape catalog. Each theme in 09-themes.md couples to one hero
+# shape -- the layout personality the theme is designed around. Same
+# theme always implies the same hero shape, so the coupling adds no new
+# hash slice and stays deterministic per prospect. If a future theme
+# is added to 09 without an entry here, select_hero_shape() falls back
+# to "fullbleed" so the build still produces a hero.
+THEME_TO_HERO_SHAPE = {
+    "broadcast": "fullbleed",     # urgent, photo-driven
+    "editorial": "split",         # newspaper, column-based feel
+    "civic": "fullbleed",
+    "warm": "fullbleed",
+    "minimal": "gradient",        # no-photo layout fits the airy aesthetic
+    "brand-forward": "fullbleed", # 09 says "hero photos dominate"
+}
+KNOWN_HERO_SHAPES = frozenset(("fullbleed", "split", "gradient"))
+DEFAULT_HERO_SHAPE = "fullbleed"
+
+
+def select_hero_shape(prospect):
+    # Map the prospect's _computed_theme to a hero shape. No new hash
+    # slice -- the coupling is intentional so the visual language of
+    # the theme matches the hero layout. Falls back to DEFAULT_HERO_SHAPE
+    # when the theme is unknown, _computed_theme is missing, OR when the
+    # mapping yields a shape that isn't in KNOWN_HERO_SHAPES. The latter
+    # case indicates a desync between THEME_TO_HERO_SHAPE here and the
+    # `.hero-*` CSS classes in 03-base-template.html -- warn loudly so
+    # the operator notices the configuration drift.
+    theme = prospect.get("_computed_theme")
+    if not theme:
+        return DEFAULT_HERO_SHAPE
+    shape = THEME_TO_HERO_SHAPE.get(theme, DEFAULT_HERO_SHAPE)
+    if shape not in KNOWN_HERO_SHAPES:
+        print(
+            f"[!] select_hero_shape: theme {theme!r} maps to unknown shape "
+            f"{shape!r}; falling back to {DEFAULT_HERO_SHAPE!r}. Check "
+            f"THEME_TO_HERO_SHAPE in build.py vs the .hero-* classes in "
+            f"03-base-template.html."
+        )
+        return DEFAULT_HERO_SHAPE
+    return shape
+
+
 def _extract_trade_palette_variants(trade):
     # Parse 07's `## TRADE: <trade>` -> `### Color defaults` block and
     # return a list of (accent, accent_dark) hex tuples from the
@@ -511,6 +553,13 @@ def main(prospect_json_path):
     if palette:
         prospect["_computed_palette"] = palette
         print(f"[*] Palette: accent={palette['accent']} accent_dark={palette['accent_dark']}")
+
+    # Hero shape coupled to theme. Same prospect -> same theme ->
+    # same hero shape. Couples visual language: editorial themes get
+    # split-photo heroes, minimal themes get gradient (no photo),
+    # everything else gets the historical fullbleed.
+    prospect["_computed_hero_shape"] = select_hero_shape(prospect)
+    print(f"[*] Hero shape: {prospect['_computed_hero_shape']}")
 
     # Hero image acquisition (unless skipped or prospect already provided one).
     # Path 1 (Unsplash) is tried first when UNSPLASH_ACCESS_KEY is set --

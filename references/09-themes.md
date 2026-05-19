@@ -203,6 +203,29 @@ overlays. Headlines: display weight (Syne 800). Badge style: filled.
 
 ---
 
+## Hero shape coupling
+
+Each theme implies one hero layout shape. The `build.py` harness
+reads `_computed_theme` and sets `prospect._computed_hero_shape`
+accordingly -- no separate hash slice, so the coupling stays
+deterministic and the theme/hero pairings always match.
+
+| Theme | Hero shape | Why this pair |
+|---|---|---|
+| `broadcast` | `fullbleed` | Urgent, photo-driven -- the news-station register works best with a full-bleed image and dark overlay |
+| `editorial` | `split` | Newspaper / column-based feel -- text-and-photo split mirrors the magazine layout the typography evokes |
+| `civic` | `fullbleed` | Structured / high-contrast -- a full-bleed photo grounds the strong geometric typography |
+| `warm` | `fullbleed` | Default residential warmth -- the historical hero behavior |
+| `minimal` | `gradient` | Airy / whitespace-driven -- a photo would clutter the ghost-card aesthetic, so the gradient hero (accent + accent-dark, no image) carries the section instead |
+| `brand-forward` | `fullbleed` | Image-forward by design -- this theme's spec already calls for hero photos to dominate |
+
+For markup, see step 3 of `06-build-prompt.md`'s `SECTION ARCHITECTURE`
+section. The `.hero-fullbleed`, `.hero-split`, and `.hero-gradient`
+CSS classes live in `03-base-template.html` -- modifier classes on
+top of `.dual-cta-hero`.
+
+---
+
 ## Fallback rule
 
 If `prospect._computed_theme` is missing or names a theme not listed

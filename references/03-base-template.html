@@ -558,6 +558,105 @@ img { display: block; max-width: 100%; }
   color: #fff;
   font-weight: 800;
 }
+
+/* Split hero -- photo on the right, copy on the left. Used by themes
+   that read column-based / editorial (newspaper-style layouts). Apply
+   class="dual-cta-hero hero-split"; the photo lives inside a child
+   .hero-split-photo with style="background-image:url(...)". Text stays
+   dark on a light background -- this variant does NOT use the dark
+   overlay treatment that hero-fullbleed applies. */
+.hero-split {
+  padding: 4rem 0;
+  border-bottom: none;
+}
+.hero-split .hero-split-grid {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--page-pad);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  min-height: 56vh;
+}
+.hero-split .dual-cta-hero-inner {
+  padding: 0;
+  max-width: none;
+}
+.hero-split .hero-split-photo {
+  height: 100%;
+  min-height: 56vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: var(--card-radius);
+}
+@media (max-width: 900px) {
+  .hero-split .hero-split-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .hero-split .hero-split-photo {
+    min-height: 36vh;
+    order: 2;
+  }
+}
+
+/* Gradient hero -- no photo. Background is a linear gradient between
+   --accent and --accent-dark, text rendered in white. Used by themes
+   that read clean and minimal where a photo would feel cluttered.
+   Apply class="dual-cta-hero hero-gradient"; no background-image. */
+.hero-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff;
+  padding: 6rem 0 5rem;
+  text-align: center;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  border-bottom: none;
+}
+.hero-gradient .dual-cta-hero-inner {
+  max-width: 800px;
+}
+.hero-gradient .dual-cta-headline,
+.hero-gradient .dual-cta-sub {
+  color: #fff;
+}
+.hero-gradient .dual-cta-headline {
+  font-size: clamp(36px, 5.5vw, 64px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 0.75rem;
+}
+.hero-gradient .dual-cta-headline em {
+  color: rgba(255, 255, 255, 0.85);
+  font-style: normal;
+}
+.hero-gradient .dual-cta-sub {
+  font-size: clamp(16px, 1.6vw, 20px);
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 640px;
+  opacity: 0.95;
+}
+.hero-gradient .dual-cta-row {
+  justify-content: center;
+}
+.hero-gradient .cta-trust-line {
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+.hero-gradient .cta-trust-text {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+}
+.hero-gradient .cta-trust-text strong {
+  color: #fff;
+  font-weight: 800;
+}
+
 .dual-cta-hero-inner {
   max-width: var(--max-width);
   margin: 0 auto;
