@@ -359,9 +359,24 @@ utility/clinical feel.
 ### Color defaults
 
 If prospect provided brand colors, use them. If not:
-- Accent: red-orange (`#D9534F`) -- emergency/urgency signal
-- Secondary: navy (`#1F3A5F`) -- trust/professional
+- Accent: **emergency red** (`#B91C1C`, Tailwind red-700) --
+  emergency/urgency signal, **WCAG AA-compliant** with white
+  button text (~6.5:1 contrast on `.nav-cta`, `.form-submit`,
+  `.cta-emergency` styles -- comfortably above the 4.5:1 AA
+  threshold for normal-size text). The shallower `#D9534F`
+  (Bootstrap red, ~4.0:1) fails AA against white text on
+  normal-size labels and is **explicitly rejected** as the
+  primary accent for buttons that contain white text.
+- Accent-dark: `#991B1B` (Tailwind red-800, hover state, ~8.2:1)
+- Secondary: navy (`#1F3A5F`, ~11.5:1) -- trust/professional
 - Background: white (light theme)
+
+The `#B91C1C` red-700 was chosen over the shallower Bootstrap
+`#D9534F` after contrast testing -- both visually read as
+"plumber emergency / urgent service" but only `#B91C1C` passes
+WCAG AA on white-text buttons. The deeper saturation reads as
+"this is serious, call now" which is the right emotional register
+for a plumber's primary CTA.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`: accent
 appears on AT MOST 3-4 elements (primary CTA, sticky phone, one badge).
@@ -596,21 +611,27 @@ the rural residential profile we're targeting).
 
 If prospect provided brand colors, use them. If not:
 - Accent: **HVAC industry blue** (`#1E5BB8`) -- cool, professional,
-  associated with cooling/comfort
-- Accent-dark: `#164B96` (darker variant for hover states)
-- Secondary: red-orange (`#D9534F`) -- emergency/urgency signal,
-  reserved for "no heat" / "no AC" emergency CTAs only
+  associated with cooling/comfort. **WCAG AA-compliant** with
+  white button text (~6.4:1 contrast on `.nav-cta`,
+  `.form-submit`, `.cta-emergency` styles).
+- Accent-dark: `#164B96` (darker variant for hover states, ~8.3:1)
+- Secondary: **emergency red** (`#B91C1C`, Tailwind red-700,
+  ~6.5:1) -- emergency/urgency signal, reserved for "no heat" /
+  "no AC" emergency CTAs only. Matches plumber accent for visual
+  consistency across the home-services trade family and uses the
+  same WCAG-AA-compliant red the plumber section adopted to
+  replace the shallower `#D9534F` (~4.0:1, fails AA).
 - Background: white (light theme)
 
-The blue/red-orange split intentionally parallels the cool/hot
-duality of HVAC services (cooling = blue, heating = red). This
-differs from the plumber default (red-orange dominant) because
-plumber visits are uniformly urgent while HVAC is split between
-urgent comfort failures and planned high-ticket installs.
+The blue/red split intentionally parallels the cool/hot duality
+of HVAC services (cooling = blue, heating = red). This differs
+from the plumber default (red-dominant) because plumber visits
+are uniformly urgent while HVAC is split between urgent comfort
+failures and planned high-ticket installs.
 
 Apply the COLOR DISCIPLINE rule from `02-redesign-gen-prompt.md`:
 accent appears on AT MOST 3-4 elements (primary CTA, sticky phone,
-one badge). The secondary red-orange is reserved for emergency
+one badge). The secondary emergency red is reserved for emergency
 CTAs only -- not used as a general accent.
 
 ---

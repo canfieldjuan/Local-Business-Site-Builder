@@ -147,7 +147,9 @@ schema as a supplementary reference when needed.
 3. **`references/07-industry-defaults.md`** — trade-specific knowledge.
    For plumbers: hero copy template selection (three-tier rule),
    canonical service catalog, trust signal priority, theme (warm),
-   accent color (`#D9534F`), section sequence, `hero_search_query`
+   accent color (`#B91C1C` red-700, WCAG-AA-compliant; replaces the
+   previous `#D9534F` which failed AA against white button text),
+   section sequence, `hero_search_query`
    for the Unsplash photo fetch.
 4. **`references/08-pitch-email-prompt.md`** — voice rules, hook table
    (Longevity / Review score / 24/7 / Family-owned / Discoverability
