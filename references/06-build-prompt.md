@@ -144,12 +144,16 @@ Output: the complete HTML file.
 The harness sets this field to one of `default`, `services-led`,
 or `reviews-led`. Read it, look up the matching named ordering in
 `references/10-section-orders.md`, and render sections in that
-order between the always-first nav and the always-last footer.
-Each trade in `07-industry-defaults.md` has a short `Section
-render order` subsection noting per-trade rationale, but those
-subsections defer to `10-section-orders.md` for the actual
-sequences -- `_computed_section_order` + 10's catalog is the only
-authoritative source.
+order. The nav is always rendered first (it precedes position 1
+of every catalog ordering and is not listed there); every catalog
+ordering includes Footer as its last position. The catalog is the
+source of truth for which sections to render and in what order --
+do NOT add an extra Footer after applying the ordering, and do NOT
+omit any catalog position. Each trade in `07-industry-defaults.md`
+has a short `Section render order` subsection noting per-trade
+rationale, but those subsections defer to `10-section-orders.md`
+for the actual sequences -- `_computed_section_order` + 10's
+catalog is the only authoritative source.
 
 **The numbered list below is a per-section RULE INDEX, not a
 render sequence.** Each numbered entry describes one section's
