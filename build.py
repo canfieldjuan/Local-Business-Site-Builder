@@ -214,20 +214,74 @@ def generate_build_html(prospect):
     with open(BASE_TEMPLATE_PATH, "r") as f:
         base_template = f.read()
 
-    user_prompt = (
-        f"PROSPECT JSON:\n{json.dumps(prospect, indent=2)}\n\n"
+    # Static block -- same bytes for every plumber/HVAC/electrician build.
+    # Cache marker on the end of this lets consecutive builds within the
+    # 5-minute ephemeral window pay ~0.1x for these tokens instead of full
+    # price. The static block deliberately comes BEFORE the variable
+    # prospect JSON: prompt caching is a prefix match, so any byte change
+    # before the marker invalidates the cache for that breakpoint.
+    static_block = (
         f"INDUSTRY DEFAULTS:\n{industry_defaults}\n\n"
-        f"BASE TEMPLATE:\n{base_template}\n"
+        f"BASE TEMPLATE:\n{base_template}"
     )
+    prospect_block = f"PROSPECT JSON:\n{json.dumps(prospect, indent=2)}"
+    if len(prospect_block) > BUILD_USER_TRUNCATE:
+        prospect_block = prospect_block[:BUILD_USER_TRUNCATE]
 
     response = client.chat.completions.create(
         model=GENERATION_MODEL,
         messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt[:BUILD_USER_TRUNCATE]}
+            {
+                "role": "system",
+                "content": [{
+                    "type": "text",
+                    "text": system_prompt,
+                    "cache_control": {"type": "ephemeral"},
+                }],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": static_block,
+                        "cache_control": {"type": "ephemeral"},
+                    },
+                    {
+                        "type": "text",
+                        "text": prospect_block,
+                    },
+                ],
+            },
         ],
-        temperature=BUILD_TEMPERATURE
+        temperature=BUILD_TEMPERATURE,
     )
+
+    # Cache observability. OpenRouter passes through both the Anthropic
+    # field names (cache_creation_input_tokens / cache_read_input_tokens)
+    # and the OpenAI-shape (prompt_tokens_details.cached_tokens). We log
+    # whichever surface populated so the operator can verify the cache is
+    # actually doing work -- a zero-read counter across consecutive builds
+    # signals a silent invalidator in the static block.
+    try:
+        usage = response.usage.model_dump()
+    except AttributeError:
+        usage = dict(response.usage) if response.usage else {}
+    cache_read = (
+        usage.get("cache_read_input_tokens")
+        or (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
+        or 0
+    )
+    cache_write = usage.get("cache_creation_input_tokens", 0)
+    prompt_total = usage.get("prompt_tokens", 0)
+    uncached = max(prompt_total - cache_read - cache_write, 0)
+    if cache_read or cache_write:
+        print(
+            f"[*] Cache: read={cache_read} write={cache_write} "
+            f"uncached={uncached} total_prompt={prompt_total} tokens"
+        )
+    else:
+        print(f"[*] Cache: no hits (cold or invalidated). total_prompt={prompt_total} tokens")
 
     html = response.choices[0].message.content
     # Belt-and-suspenders in case the LLM leaks fences despite the prompt rule.
