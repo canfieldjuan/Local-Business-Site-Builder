@@ -360,10 +360,23 @@ detail pages, blog) is v2 and lives in a different generation prompt.
 
 ### Theme
 
-Plumber sites default to theme = `warm` (rounded cards, friendly Lexend
-typography, Lora serif for headlines). Override to `civic` only if the
-prospect's brand colors are explicitly cool/blue and they want a more
-utility/clinical feel.
+`allowed_themes: [warm, civic, broadcast, editorial]`
+
+The harness picks among these per the deterministic rule in
+`06-build-prompt.md` (see `references/09-themes.md` for the full theme
+catalog). When each one shines for a plumber prospect:
+
+- **warm** -- the canonical residential plumber default. Rounded cards,
+  friendly typography, serif headlines. Pairs well with family-owned /
+  locally-owned signals.
+- **civic** -- prospects whose brand reads cool/blue or who lean
+  utility / municipal contractor. Less common for rural sole proprietors.
+- **broadcast** -- emergency-first prospects with `has_24_7: true`,
+  particularly newer businesses (Tier 2 in the headline tier rule).
+  Conveys urgency through dense type and grid layout.
+- **editorial** -- tenured plumbers (`established_year` set and
+  `years_in_business >= 20`). Magazine refinement for the
+  heritage-led pitch.
 
 ### Color defaults
 
@@ -610,11 +623,21 @@ service detail pages, blog) is v2.
 
 ### Theme
 
-HVAC sites default to theme = `warm` (same as plumber and most
-local trades). Override to `civic` only if the prospect's brand is
-explicitly cool/clinical, OR to `minimal` for commercial HVAC
-operations that want a professional-services feel (less common in
-the rural residential profile we're targeting).
+`allowed_themes: [warm, civic, minimal, broadcast]`
+
+The harness picks among these per the deterministic rule in
+`06-build-prompt.md` (see `references/09-themes.md` for the full theme
+catalog). When each one shines for an HVAC prospect:
+
+- **warm** -- residential default. Friendly, rounded, trust-signal
+  serif headlines. The natural pick for the rural homeowner audience.
+- **civic** -- prospects whose brand reads cool/blue (HVAC's natural
+  industry color) or municipal-contractor flavor.
+- **minimal** -- commercial HVAC operations targeting business clients.
+  Whitespace and clean geometric sans signal professional services.
+- **broadcast** -- newer businesses leading on emergency response
+  (`has_24_7: true` and `years_in_business < 8`). The HVAC failure
+  modes (no-heat in winter, no-AC in summer) reward urgency framing.
 
 ### Color defaults
 
@@ -880,10 +903,23 @@ individual installs as detail pages, blog) is v2.
 
 ### Theme
 
-Electrician sites default to theme = `warm` (same as plumber and
-HVAC). Override to `civic` only if the prospect's brand is
-explicitly utility/clinical, OR to `minimal` for commercial
-electrical operations targeting business clients.
+`allowed_themes: [warm, minimal, civic, broadcast]`
+
+The harness picks among these per the deterministic rule in
+`06-build-prompt.md` (see `references/09-themes.md` for the full theme
+catalog). When each one shines for an electrician prospect:
+
+- **warm** -- residential default. The natural pick for rural homeowner
+  audiences and family-owned shops.
+- **minimal** -- commercial electrical operations, electricians
+  targeting business clients, EV-charger or smart-home specialists.
+  Whitespace + DM Sans reads sleek and modern.
+- **civic** -- prospects whose brand reads utility / clinical /
+  municipal-contractor.
+- **broadcast** -- emergency-first electricians (sparks, no-power,
+  breaker failures) with `has_24_7: true`. Lower hit rate for
+  electricians than for plumbers since 24/7 is rarer in this trade,
+  but applicable when present.
 
 ### Color defaults
 

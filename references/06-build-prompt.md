@@ -390,59 +390,49 @@ HERO CHIP (eyebrow badge above the headline):
 
 ## THEME & TYPOGRAPHY
 
-Use the theme specified in INDUSTRY_DEFAULTS for the prospect's trade
-(plumber -> `warm`, HVAC -> `warm`, and other home-services trades default
-to `warm` unless their 07 section specifies otherwise). Honor
-`prospect.theme_override` if set.
+The build harness (`build.py`) selects a theme deterministically per
+prospect and injects the choice as `prospect._computed_theme` before you
+see the prospect JSON. **Read `prospect._computed_theme` verbatim and
+apply the matching theme block from `references/09-themes.md`** -- do
+NOT pick the theme yourself, and do NOT second-guess the harness. Two
+builds of the same prospect must produce the same theme; that
+determinism is the harness's job, not yours.
 
-The build skill is a standalone path -- do NOT reach into
-`02-redesign-gen-prompt.md` (which lives in the redesign flow) to look
-up typography. Use the inline specs below for the supported themes:
+For each build:
 
-### warm (default for plumber, HVAC, and most local home-services trades)
+1. Locate the theme named by `prospect._computed_theme` in 09.
+2. Insert that theme's Google Fonts `<link>` tag in the document `<head>`.
+3. In the `:root` block, override `--font-display`, `--font-body`,
+   `--font-serif`, and `--card-radius` with the values from that theme.
+   Color tokens (`--accent`, `--accent-dark`, `--secondary`, etc.) come
+   from `prospect.brand_colors` if set, otherwise the trade's `Color
+   defaults` in 07 -- the theme does NOT supply color values, only
+   typography and layout feel.
+4. Apply the theme's style notes (card style, headline style, badge
+   style) consistently across the section components.
 
-```html
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Lato:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-```
+If `prospect._computed_theme` is missing or names a theme not present
+in 09, fall back to `warm` and emit a warning in the report (this
+indicates the harness failed to populate the field).
 
-In `:root` override the typography vars:
-```
---font-display:  'Lexend', sans-serif;
---font-body:     'Lato', sans-serif;
---font-serif:    'Lora', Georgia, serif;
---card-radius:   6px;
-```
+### Theme selection rule (reference -- the harness implements this)
 
-### minimal (for sleeker / professional-services builds)
+The harness uses the following priority order, first match wins. This
+is documented here so you can sanity-check the selection if `_computed_theme`
+looks surprising, but the harness is authoritative.
 
-```html
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-```
-
-In `:root`:
-```
---font-display:  'DM Sans', sans-serif;
---font-body:     'DM Sans', sans-serif;
---font-serif:    'DM Serif Display', Georgia, serif;
---card-radius:   8px;
-```
-
-### civic (for municipal / utility / clinical feel)
-
-```html
-<link href="https://fonts.googleapis.com/css2?family=Fjalla+One&family=Noto+Sans:wght@400;500;600&family=Merriweather:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
-```
-
-In `:root`:
-```
---font-display:  'Fjalla One', sans-serif;
---font-body:     'Noto Sans', sans-serif;
---font-serif:    'Merriweather', Georgia, serif;
---card-radius:   4px;
-```
-
-For any other theme name from prospect.theme_override that isn't
-listed above, fall back to `warm` and emit a warning in the report.
+1. **`prospect.brand_colors` is set** (any non-null hex or palette) ->
+   `brand-forward`. Rationale: the prospect already has explicit brand
+   identity, and `brand-forward` is the layout designed to showcase it.
+2. **`prospect.theme_override` is set** and names a theme listed in 09
+   -> that theme. Salesperson explicit opt-in.
+3. **Trade allowed list** -- each trade in 07 declares an
+   `allowed_themes:` list. The harness narrows to that list.
+4. **Deterministic hash within the allowed list** -- the harness
+   computes `md5(business_name.lower())` and takes its integer value
+   modulo `len(allowed_themes)` to pick. Same business name -> same
+   theme always; different prospects within the same trade get
+   different themes from the allowed set.
 
 ---
 

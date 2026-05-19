@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import json
+import hashlib
 from datetime import date
 
 from lib.clients import openai_client as client, GENERATION_MODEL
@@ -149,6 +150,87 @@ def load_prospect(path):
 
 def slugify(name):
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "prospect"
+
+
+# Catalog of theme names recognized by 09-themes.md. The harness validates
+# computed_theme against this set so an out-of-band override (e.g. someone
+# putting "vintage" in prospect.theme_override) doesn't silently propagate
+# into the LLM prompt as an unknown theme. Kept in sync with the per-theme
+# sections in references/09-themes.md.
+KNOWN_THEMES = frozenset((
+    "warm",
+    "minimal",
+    "civic",
+    "broadcast",
+    "editorial",
+    "brand-forward",
+))
+DEFAULT_THEME = "warm"
+
+
+def _extract_trade_allowed_themes(trade):
+    # Parse 07's `## TRADE: <trade>` section and return the
+    # `allowed_themes: [a, b, c]` list. Returns None when the section,
+    # the list line, or any parsed entry is missing -- the caller falls
+    # back to [DEFAULT_THEME] in that case so a misconfigured 07 still
+    # produces a buildable site rather than a hard crash.
+    try:
+        with open(INDUSTRY_DEFAULTS_PATH, "r") as f:
+            content = f.read()
+    except OSError:
+        return None
+
+    section_match = re.search(
+        r"^## TRADE:\s*" + re.escape(trade) + r"\s*$(.*?)(?=^## TRADE:|\Z)",
+        content,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not section_match:
+        return None
+
+    line_match = re.search(
+        r"`allowed_themes:\s*\[([^\]]+)\]`",
+        section_match.group(1),
+    )
+    if not line_match:
+        return None
+
+    candidates = [t.strip() for t in line_match.group(1).split(",")]
+    valid = [t for t in candidates if t in KNOWN_THEMES]
+    return valid or None
+
+
+def select_theme(prospect):
+    # Deterministic per-prospect theme selection. Same prospect JSON
+    # always yields the same theme. Priority order (first match wins):
+    #
+    # 1. prospect.brand_colors is set (any non-null value) -> brand-forward.
+    #    The prospect already has explicit brand identity; the layout
+    #    designed to showcase it is brand-forward.
+    # 2. prospect.theme_override is set AND names a known theme -> that
+    #    theme. Salesperson explicit opt-in. Unknown values are ignored
+    #    so a typo doesn't silently propagate as an unrecognized theme.
+    # 3. Hash-based pick from the trade's allowed_themes list (from 07).
+    #    md5(business_name.lower()) mod len(allowed) is stable across
+    #    Python runs (unlike the built-in hash()), so re-builds match.
+    # 4. Fallback to DEFAULT_THEME if 07 can't be parsed or the trade
+    #    has no allowed_themes entry.
+    if prospect.get("brand_colors"):
+        return "brand-forward"
+
+    override = prospect.get("theme_override")
+    if isinstance(override, str) and override in KNOWN_THEMES:
+        return override
+
+    trade = prospect.get("trade", "")
+    allowed = _extract_trade_allowed_themes(trade) or [DEFAULT_THEME]
+
+    business_name = (prospect.get("business_name") or "").strip().lower()
+    if not business_name:
+        return allowed[0]
+    digest = hashlib.md5(business_name.encode("utf-8")).hexdigest()
+    index = int(digest[:8], 16) % len(allowed)
+    return allowed[index]
 
 
 def _extract_trade_hero_prompt(trade):
@@ -334,6 +416,15 @@ def main(prospect_json_path):
 
     print(f"[*] Building {prospect['business_name']} ({prospect['trade']}, {prospect['city']}, {prospect['state']})")
     print(f"[*] Output: {output_dir}/")
+
+    # Deterministic theme selection. Setting this on the prospect dict
+    # before HTML generation means the LLM reads `_computed_theme` as a
+    # fact in the prospect JSON and applies the matching block from
+    # references/09-themes.md. Two builds of the same prospect always
+    # pick the same theme; different prospects within a trade get
+    # different themes from the trade's allowed_themes list in 07.
+    prospect["_computed_theme"] = select_theme(prospect)
+    print(f"[*] Theme: {prospect['_computed_theme']}")
 
     # Hero image acquisition (unless skipped or prospect already provided one).
     # Path 1 (Unsplash) is tried first when UNSPLASH_ACCESS_KEY is set --
